@@ -73,3 +73,19 @@ ideas:
 
 - 100 m αυτονομια το καθε ενα και λιγο λιγοτερο σε δασος λογω εμποδιων
 - LoRa 10 - 20 Km
+
+# solutions
+
+- grid 50 x 50 metra
+- zigbee
+- πανω σε κλαδια
+- εφαρμογη με gps για τοποθεση
+- zigbee, temperature
+- waterproff in a jar can
+- camera AI sto gateway
+- gateway - weather station
+
+# Pros
+
+- cost benefit - long time support
+- fast responce
