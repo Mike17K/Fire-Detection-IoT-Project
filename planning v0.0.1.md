@@ -80,12 +80,18 @@ ideas:
 - zigbee
 - πανω σε κλαδια
 - εφαρμογη με gps για τοποθεση
-- zigbee, temperature
+- zigbee, temperature, smoke
 - waterproff in a jar can
 - camera AI sto gateway
 - gateway - weather station
 
-# Pros
+# Senario
+the sensors will send data only when requested or when the values rise above a certain level
+the weather station along with the temperature sensors of the ground will create a prediction of danger level
+above a certain danger level the system will go into high alert (sensors will gather data more frequently)
+if the temperature and smoke sensor detect a rise above a warning threshhold they will gather data at a faster pace
+if they rise above a danger threshold they will signal a possible fire to the gateway
 
+# Pros
 - cost benefit - long time support
 - fast responce
