@@ -76,16 +76,17 @@ ideas:
 
 # solutions
 
-- grid 50 x 50 metra
-- zigbee
+- grid ana 1 km ( να δικαιολογισουμε το λογο της αποστασης - εστια φωτιας - καπνος range κλπ research )
+- lora
 - πανω σε κλαδια
 - εφαρμογη με gps για τοποθεση
-- zigbee, temperature, smoke
+- lora, temperature, smoke
 - waterproff in a jar can
 - camera AI sto gateway
 - gateway - weather station
 
 # Senario
+
 the sensors will send data only when requested or when the values rise above a certain level
 the weather station along with the temperature sensors of the ground will create a prediction of danger level
 above a certain danger level the system will go into high alert (sensors will gather data more frequently)
@@ -93,5 +94,6 @@ if the temperature and smoke sensor detect a rise above a warning threshhold the
 if they rise above a danger threshold they will signal a possible fire to the gateway
 
 # Pros
+
 - cost benefit - long time support
 - fast responce
