@@ -7,10 +7,30 @@ from typing import Dict, Tuple, List
 
 
 class ContextBroker:
-    def __init__(self, context_broker_host):
+    def __init__(self, context_broker_host:str):
         self.context_broker_base_url = f"http://{context_broker_host}:1026/v2/entities"
 
-    def __create_sensor(self, type:str, deviceId:str, location:Tuple[float, float], serialNumber:str) -> None:
+
+    #### Create Entities ####
+    def __create_entity(self, data:Dict) -> None:
+        response = requests.post(
+            self.context_broker_base_url,
+            json=data
+        )
+
+        if response.status_code != 201:
+            print("Fail")
+            raise Exception(f"{response.status_code} {response.text}")
+
+        print("Success")
+
+    def __create_sensor(
+        self,
+        type:str,
+        deviceId:str,
+        location:Tuple[float, float],
+        serialNumber:str
+    ) -> None:
         data = {
             "id": deviceId,
             "type": "Device",
@@ -21,7 +41,7 @@ class ContextBroker:
                 "type": "GeoProperty",
                 "value": {
                     "type": "Point",
-                    "coordinates": [location[0], location[1]]
+                    "coordinates": location
                 }
             },
             "serialNumber": {
@@ -44,19 +64,7 @@ class ContextBroker:
                 "value":["windDirection", "windSpeed"]
             }
 
-        payload = json.dumps(data)
-
-        response = requests.post(
-            self.context_broker_base_url,
-            data=payload,
-            headers={"Content-Type": "application/json"}
-        )
-
-        if response.status_code != 201:
-            print("Fail")
-            raise Exception(f"{response.status_code} {response.text}")
-
-        print("Success")
+        self.__create_entity(data)
 
     def create_tree_sensor(self, deviceId, location:Tuple[float, float], serialNumber:str) -> None:
         print(f"Creating tree sensor: {deviceId}", end='...')
@@ -66,15 +74,66 @@ class ContextBroker:
         print(f"Creating wind sensor: {deviceId}", end='...')
         self.__create_sensor("wind_sensor", deviceId, location, serialNumber)
 
+    def create_fire_forest_status(
+        self,
+        entityId:str,
+        fireDetected:bool,
+        fireDetectedConfidence:float,
+        fireRiskIndex:float,
+        location:List[Tuple[float, float]]
+    ) -> None:
+        print(f"Creating FireForestStatus: {entityId}", end='...')
 
+        data = {
+            "id": entityId,
+            "type": "FireForestStatus",
+            "dateCreated": {
+                "type": "DateTime",
+                "value": datetime.utcnow().isoformat()
+            },
+            "fireDetected": {
+                "type": "Boolean",
+                "value": fireDetected
+            },
+            "fireDetectedConfidence": {
+                "type": "Float",
+                "value": fireDetectedConfidence
+            },
+            "fireRiskIndex": {
+                "type": "Float",
+                "value": fireRiskIndex
+            },
+        }
+
+        if len(location) == 1:
+            data["location"] = {
+                "type": "GeoProperty",
+                "value": {
+                    "type": "Point",
+                    "coordinates": location[0]
+                }
+            }
+        else:
+            data["location"] = {
+                "type": "GeoProperty",
+                "value": {
+                    "type": "Polygon",
+                    "coordinates": location
+                }
+            }
+
+        self.__create_entity(data)
+
+
+    #### Update Entities ####
     def __update_sensor(
         self,
         deviceId:str,
         dateObserved:datetime,
-        data: List[str]
+        data:List[str]
     ) -> None:
 
-        payload = json.dumps({
+        payload = {
             "dateObserved": {
                 "type": "DateTime",
                 "value": dateObserved.isoformat()
@@ -83,12 +142,11 @@ class ContextBroker:
                 "type": "Text",
                 "value": "&".join(data)
             }
-        })
+        }
 
         response = requests.patch(
             f"{self.context_broker_base_url}/{deviceId}/attrs",
-            data=payload,
-            headers={"Content-Type": "application/json"}
+            json=payload
         )
 
 
@@ -102,9 +160,9 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        CO2: str|None = None,
-        humidity: str|None = None,
-        temperature: str|None = None
+        CO2:str|None = None,
+        humidity:str|None = None,
+        temperature:str|None = None
     ) -> None:
         print(f"Updating tree sensor: {deviceId}", end='...')
 
@@ -120,8 +178,8 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        windDirection: str|None = None,
-        windSpeed: str|None = None,
+        windDirection:str|None = None,
+        windSpeed:str|None = None,
     ) -> None:
         print(f"Updating wind sensor: {deviceId}", end='...')
 
@@ -133,12 +191,16 @@ class ContextBroker:
         self.__update_sensor(deviceId, dateObserved, data)
 
 
-    def get_sensor(self, deviceId:str) -> Dict[str, str]:
+    #### Get Entities ####
+    def get_entity(self, entityId:str, detailed:bool=False) -> Dict[str, str]:
+        params = {}
+        if not detailed:
+            params["options"] = "keyValues"
 
         response = requests.get(
-            f"{self.context_broker_base_url}/{deviceId}",
+            f"{self.context_broker_base_url}/{entityId}",
             headers={"Accept": "application/json"},
-            params={"options": "keyValues"}
+            params=params
         )
 
         if response.status_code != 200:
@@ -146,12 +208,13 @@ class ContextBroker:
 
         return response.json()
 
-    def delete_sensor(self, deviceId:str) -> None:
-        print(f"Deleting device: {deviceId}", end='...')
+
+    #### Delete Entities ####
+    def delete_entity(self, entityId:str) -> None:
+        print(f"Deleting entity: {entityId}", end='...')
 
         response = requests.delete(
-            f"{self.context_broker_base_url}/{deviceId}",
-            headers={"Accept": "application/json"}
+            f"{self.context_broker_base_url}/{entityId}",
         )
 
         if response.status_code != 204:
@@ -167,7 +230,7 @@ if __name__ == "__main__":
     context.create_tree_sensor("tree_sensor_0", (0,0), str(uuid4()))
     context.create_wind_sensor("wind_sensor_0", (0,0), str(uuid4()))
 
-    print(context.get_sensor("tree_sensor_0"))
+    print(context.get_entity("tree_sensor_0"))
 
     context.update_tree_sensor(
         "tree_sensor_0",
@@ -177,9 +240,11 @@ if __name__ == "__main__":
         temperature="15"
     )
 
-    print(context.get_sensor("tree_sensor_0"))
+    print(context.get_entity("tree_sensor_0"))
 
-    print(context.get_sensor("wind_sensor_0"))
+    context.delete_entity("tree_sensor_0")
+
+    print(context.get_entity("wind_sensor_0"))
 
     context.update_wind_sensor(
         "wind_sensor_0",
@@ -188,7 +253,18 @@ if __name__ == "__main__":
         windSpeed="15",
     )
 
-    print(context.get_sensor("wind_sensor_0"))
+    print(context.get_entity("wind_sensor_0", detailed=True))
 
-    context.delete_sensor("tree_sensor_0")
-    context.delete_sensor("wind_sensor_0")
+    context.delete_entity("wind_sensor_0")
+
+    context.create_fire_forest_status(
+        "fire_forest_status_0",
+        False,
+        0.5,
+        0.9,
+        [(0,0), (0,0)]
+    )
+
+    print(context.get_entity("fire_forest_status_0"))
+
+    context.delete_entity("fire_forest_status_0")
