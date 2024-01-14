@@ -3,24 +3,19 @@ import json
 from uuid import uuid4
 from datetime import datetime
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 
 class ContextBroker:
     def __init__(self, context_broker_host):
         self.context_broker_base_url = f"http://{context_broker_host}:1026/v2/entities"
 
-    def create_tree_sensor(self, deviceId, location:Tuple[float, float]) -> None:
+    def __create_sensor(self, type:str, deviceId:str, location:Tuple[float, float], serialNumber:str) -> None:
         data = {
             "id": deviceId,
             "type": "Device",
-            "controlledProperty": {
-                "type": "List",
-                "value":["CO2", "humidity", "temperature"]
-            },
             "dateObserved": {
                 "type": "DateTime",
-                "value": None
             },
             "location": {
                 "type": "GeoProperty",
@@ -31,16 +26,25 @@ class ContextBroker:
             },
             "serialNumber": {
                 "type": "Text",
-                "value": str(uuid4()),
+                "value": serialNumber,
             },
             "value": {
                 "type": "Text",
             }
         }
 
-        payload = json.dumps(data)
+        if type == "tree_sensor":
+            data["controlledProperty"] = {
+                "type": "List",
+                "value":["CO2", "humidity", "temperature"]
+            }
+        elif type == "wind_sensor":
+            data["controlledProperty"] = {
+                "type": "List",
+                "value":["windDirection", "windSpeed"]
+            }
 
-        print(f"Creating tree sensor: {data['id']}", end='...')
+        payload = json.dumps(data)
 
         response = requests.post(
             self.context_broker_base_url,
@@ -54,22 +58,21 @@ class ContextBroker:
 
         print("Success")
 
+    def create_tree_sensor(self, deviceId, location:Tuple[float, float], serialNumber:str) -> None:
+        print(f"Creating tree sensor: {deviceId}", end='...')
+        self.__create_sensor("tree_sensor", deviceId, location, serialNumber)
 
-    def update_tree_sensor_value(
+    def create_wind_sensor(self, deviceId, location:Tuple[float, float], serialNumber:str) -> None:
+        print(f"Creating wind sensor: {deviceId}", end='...')
+        self.__create_sensor("wind_sensor", deviceId, location, serialNumber)
+
+
+    def __update_sensor(
         self,
         deviceId:str,
         dateObserved:datetime,
-        CO2:str|None = None,
-        humidity:str|None = None,
-        temperature:str|None = None,
+        data: List[str]
     ) -> None:
-
-        if not CO2:
-            CO2 = ""
-        if not humidity:
-            humidity = ""
-        if not temperature:
-            temperature = ""
 
         payload = json.dumps({
             "dateObserved": {
@@ -78,11 +81,9 @@ class ContextBroker:
             },
             "value": {
                 "type": "Text",
-                "value": f"{CO2}&{humidity}&{temperature}"
+                "value": "&".join(data)
             }
         })
-
-        print(f"Updating tree sensor: {deviceId}", end='...')
 
         response = requests.patch(
             f"{self.context_broker_base_url}/{deviceId}/attrs",
@@ -97,8 +98,42 @@ class ContextBroker:
 
         print("Success")
 
+    def update_tree_sensor(
+        self,
+        deviceId:str,
+        dateObserved:datetime,
+        CO2: str|None = None,
+        humidity: str|None = None,
+        temperature: str|None = None
+    ) -> None:
+        print(f"Updating tree sensor: {deviceId}", end='...')
 
-    def get_tree_sensor(self, deviceId:str) -> Dict[str, str]:
+        data = [
+            CO2 if CO2 else "",
+            humidity if humidity else "",
+            temperature if temperature else ""
+        ]
+
+        self.__update_sensor(deviceId, dateObserved, data)
+
+    def update_wind_sensor(
+        self,
+        deviceId:str,
+        dateObserved:datetime,
+        windDirection: str|None = None,
+        windSpeed: str|None = None,
+    ) -> None:
+        print(f"Updating wind sensor: {deviceId}", end='...')
+
+        data = [
+            windDirection if windDirection else "",
+            windSpeed if windSpeed else "",
+        ]
+
+        self.__update_sensor(deviceId, dateObserved, data)
+
+
+    def get_sensor(self, deviceId:str) -> Dict[str, str]:
 
         response = requests.get(
             f"{self.context_broker_base_url}/{deviceId}",
@@ -111,9 +146,8 @@ class ContextBroker:
 
         return response.json()
 
-    def delete_tree_sensor(self, deviceId:str) -> None:
-
-        print(f"Deleting tree sensor: {deviceId}", end='...')
+    def delete_sensor(self, deviceId:str) -> None:
+        print(f"Deleting device: {deviceId}", end='...')
 
         response = requests.delete(
             f"{self.context_broker_base_url}/{deviceId}",
@@ -126,14 +160,16 @@ class ContextBroker:
 
         print("Success")
 
+
 if __name__ == "__main__":
     context = ContextBroker("192.168.1.2")
 
-    context.create_tree_sensor("tree_sensor_0", (0,0))
+    context.create_tree_sensor("tree_sensor_0", (0,0), str(uuid4()))
+    context.create_wind_sensor("wind_sensor_0", (0,0), str(uuid4()))
 
-    print(context.get_tree_sensor("tree_sensor_0"))
+    print(context.get_sensor("tree_sensor_0"))
 
-    context.update_tree_sensor_value(
+    context.update_tree_sensor(
         "tree_sensor_0",
         datetime.utcnow(),
         CO2="15",
@@ -141,6 +177,18 @@ if __name__ == "__main__":
         temperature="15"
     )
 
-    print(context.get_tree_sensor("tree_sensor_0"))
+    print(context.get_sensor("tree_sensor_0"))
 
-    context.delete_tree_sensor("tree_sensor_0")
+    print(context.get_sensor("wind_sensor_0"))
+
+    context.update_wind_sensor(
+        "wind_sensor_0",
+        datetime.utcnow(),
+        windDirection="15",
+        windSpeed="15",
+    )
+
+    print(context.get_sensor("wind_sensor_0"))
+
+    context.delete_sensor("tree_sensor_0")
+    context.delete_sensor("wind_sensor_0")
