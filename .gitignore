@@ -1,0 +1,7 @@
+# Python stuff
+__pycache__/
+bin/
+include/
+lib*/
+lib64
+pyvenv.cfg
