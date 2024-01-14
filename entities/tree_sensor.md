@@ -16,7 +16,7 @@ Global description: A sensor placed on a tree within a forest to gather temperat
 - 'serialNumber[string]': Unique device identifier. Is the same as the devEUI of the device. May change if device is replaced
 - 'type[string]': NGSI Entity type. Is has to be Device
 - 'value[String]': Current values of the sensors. The string consists of the values for the measurements
-    in the order in which they appear in the field "controlledProperty" separated by the character ";".
+    in the order in which they appear in the field "controlledProperty" separated by the character "&".
     Units are parts per million (ppm) for CO2, relative humidity (%RH) for humidity, degrees Celsius (°C) for temperature
 
 Required properties

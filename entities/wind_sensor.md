@@ -16,7 +16,7 @@ Global description: A sensor placed on a tree within a forest to gather temperat
 - 'serialNumber[string]': Unique device identifier. Is the same as the devEUI of the device. May change if device is replaced
 - 'type[string]': NGSI Entity type. Is has to be Device
 - 'value[String]': Current values of the sensor. The string consists of the values for measurements
-    in the order in which they appear in the field "controlledProperty" separated by the character ";".
+    in the order in which they appear in the field "controlledProperty" separated by the character "&".
     Units are degrees (°) ranging from 0° to 360° for windDirection, meters per second (m/s) for windSpeed
 
 Required properties
