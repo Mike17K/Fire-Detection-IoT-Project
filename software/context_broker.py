@@ -7,12 +7,20 @@ from typing import Dict, Tuple, List
 
 
 class ContextBroker:
-    def __init__(self, context_broker_host:str):
+    def __init__(
+        self,
+        context_broker_host:str
+    ):
+
         self.context_broker_base_url = f"http://{context_broker_host}:1026/v2/entities"
 
 
     #### Create Entities ####
-    def __create_entity(self, data:Dict) -> None:
+    def __create_entity(
+        self,
+        data:Dict
+    ) -> None:
+
         response = requests.post(
             self.context_broker_base_url,
             json=data
@@ -31,6 +39,7 @@ class ContextBroker:
         location:Tuple[float, float],
         serialNumber:str
     ) -> None:
+
         data = {
             "id": deviceId,
             "type": "Device",
@@ -66,11 +75,23 @@ class ContextBroker:
 
         self.__create_entity(data)
 
-    def create_tree_sensor(self, deviceId, location:Tuple[float, float], serialNumber:str) -> None:
+    def create_tree_sensor(
+        self,
+        deviceId:str,
+        location:Tuple[float, float],
+        serialNumber:str
+    ) -> None:
+
         print(f"Creating tree sensor: {deviceId}", end='...')
         self.__create_sensor("tree_sensor", deviceId, location, serialNumber)
 
-    def create_wind_sensor(self, deviceId, location:Tuple[float, float], serialNumber:str) -> None:
+    def create_wind_sensor(
+        self,
+        deviceId:str,
+        location:Tuple[float, float],
+        serialNumber:str
+    ) -> None:
+
         print(f"Creating wind sensor: {deviceId}", end='...')
         self.__create_sensor("wind_sensor", deviceId, location, serialNumber)
 
@@ -82,6 +103,7 @@ class ContextBroker:
         fireRiskIndex:float,
         location:List[Tuple[float, float]]
     ) -> None:
+
         print(f"Creating FireForestStatus: {entityId}", end='...')
 
         data = {
@@ -164,6 +186,7 @@ class ContextBroker:
         humidity:str|None = None,
         temperature:str|None = None
     ) -> None:
+
         print(f"Updating tree sensor: {deviceId}", end='...')
 
         data = [
@@ -181,6 +204,7 @@ class ContextBroker:
         windDirection:str|None = None,
         windSpeed:str|None = None,
     ) -> None:
+
         print(f"Updating wind sensor: {deviceId}", end='...')
 
         data = [
@@ -192,7 +216,12 @@ class ContextBroker:
 
 
     #### Get Entities ####
-    def get_entity(self, entityId:str, detailed:bool=False) -> Dict[str, str]:
+    def get_entity(
+        self,
+        entityId:str,
+        detailed:bool=False
+    ) -> Dict[str, str]:
+
         params = {}
         if not detailed:
             params["options"] = "keyValues"
@@ -210,7 +239,11 @@ class ContextBroker:
 
 
     #### Delete Entities ####
-    def delete_entity(self, entityId:str) -> None:
+    def delete_entity(
+        self,
+        entityId:str
+    ) -> None:
+
         print(f"Deleting entity: {entityId}", end='...')
 
         response = requests.delete(
