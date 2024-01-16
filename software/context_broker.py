@@ -3,7 +3,7 @@ import json
 from uuid import uuid4
 from datetime import datetime
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Any
 
 
 class ContextBroker:
@@ -18,7 +18,7 @@ class ContextBroker:
     #### Create Entities ####
     def __create_entity(
         self,
-        data:Dict
+        data:Dict[str, Any]
     ) -> None:
 
         response = requests.post(
@@ -47,10 +47,10 @@ class ContextBroker:
                 "type": "DateTime",
             },
             "location": {
-                "type": "GeoProperty",
+                "type": "geo:json",
                 "value": {
                     "type": "Point",
-                    "coordinates": location
+                    "coordinates": location[::-1] # fiware-orion stores locations as lon,lat instead of the common lat,lon
                 }
             },
             "serialNumber": {
@@ -65,7 +65,7 @@ class ContextBroker:
         if type == "tree_sensor":
             data["controlledProperty"] = {
                 "type": "List",
-                "value":["CO2", "humidity", "temperature"]
+                "value":["co2", "humidity", "temperature"]
             }
         elif type == "wind_sensor":
             data["controlledProperty"] = {
@@ -125,23 +125,26 @@ class ContextBroker:
                 "type": "Float",
                 "value": fireRiskIndex
             },
+            "location": {
+                "type": "geo:json",
+                "value": None
+            }
         }
 
         if len(location) == 1:
-            data["location"] = {
-                "type": "GeoProperty",
-                "value": {
-                    "type": "Point",
-                    "coordinates": location[0]
-                }
+            data["location"]["value"] = {
+                "type": "Point",
+                "coordinates": location[0][::-1] # fiware-orion stores locations as lon,lat instead of the common lat,lon
             }
         else:
-            data["location"] = {
-                "type": "GeoProperty",
-                "value": {
-                    "type": "Polygon",
-                    "coordinates": location
-                }
+            # fiware-orion stores locations as lon,lat instead of the common lat,lon
+            reversedLocations = []
+            for point in location:
+                reversedLocations.append(point[::-1])
+
+            data["location"]["value"] = {
+                "type": "Polygon",
+                "coordinates": location
             }
 
         self.__create_entity(data)
@@ -220,7 +223,7 @@ class ContextBroker:
         self,
         entityId:str,
         detailed:bool=False
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
 
         params = {}
         if not detailed:
@@ -235,7 +238,19 @@ class ContextBroker:
         if response.status_code != 200:
             raise Exception(f"{response.status_code} {response.text}")
 
-        return response.json()
+        entity = response.json()
+
+        # convert locations from lon,lat that fiware-orion stores to the more common lat,lon
+        try:
+            newLocations = []
+            for point in entity["location"]["coordinates"]:
+                newLocations.append(point[::-1])
+
+            entity["location"]["coordinates"] = newLocations
+        except:
+            entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+
+        return entity
 
 
     #### Delete Entities ####
