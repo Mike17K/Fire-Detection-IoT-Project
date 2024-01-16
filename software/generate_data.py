@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from context_broker import ContextBroker
 
-from typing import Dict, Tuple, Iterable
+from typing import Dict, Tuple, Iterable, List
 
 coord_limits = {
     "latitude": {
@@ -15,6 +15,15 @@ coord_limits = {
         "max": 21.96498
     }
 }
+
+wind_coordinates = [
+    (38.3006, 21.9362),
+    (38.3138, 21.8767),
+    (38.3014, 21.9070),
+    (38.2790, 21.9248),
+    (38.3127, 21.9374),
+    (38.2967, 21.9620)
+]
 
 def generate_locations(
     coord_limits:Dict,
@@ -35,15 +44,36 @@ def generate_tree_sensors(
     coord_limits:Dict,
     grid_size:int
 ) -> None:
+
     for i, location in enumerate(generate_locations(coord_limits, grid_size)):
-        broker_connection.create_tree_sensor(f"tree_sensor_{i}", location, str(uuid4()))
+        try:
+            broker_connection.create_tree_sensor(f"tree_sensor_{i}", location, str(uuid4()))
+        except Exception as e:
+            print(e)
+
+def generate_wind_sensors(
+    broker_connection:ContextBroker,
+    wind_coordinates:List[Tuple[float, float]],
+) -> None:
+
+    for i, location in enumerate(wind_coordinates):
+        try:
+            broker_connection.create_wind_sensor(f"wind_sensor_{i}", location, str(uuid4()))
+        except Exception as e:
+            print(e)
+
 
 
 if __name__ == "__main__":
     cb = ContextBroker("192.168.1.2")
 
-    grid_size = 10
-    generate_tree_sensors(cb, coord_limits, grid_size)
+    tree_grid_size = 10
+    generate_tree_sensors(cb, coord_limits, tree_grid_size)
 
-    for i in range(grid_size ** 2):
-        print(cb.get_entity(f"tree_sensor_{i}"))
+    generate_wind_sensors(cb, wind_coordinates)
+
+    # for i in range(tree_grid_size ** 2):
+    #     print(cb.get_entity(f"tree_sensor_{i}"))
+
+    for i in range(len(wind_coordinates)):
+        print(cb.get_entity(f"wind_sensor_{i}"))
