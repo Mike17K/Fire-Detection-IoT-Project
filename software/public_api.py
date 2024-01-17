@@ -54,6 +54,30 @@ async def get_tree_sensor_value(request: Request):
 
     return data
 
+@app.get("/trees")
+async def get_tree_sensor_values():
+    tree_sensors = cb.get_tree_sensors()
+
+    data = []
+
+    for tree_sensor in tree_sensors:
+        temp = {
+            "location": tree_sensor["location"]["coordinates"],
+            "co2": None,
+            "humidity": None,
+            "temperature": None,
+        }
+        try:
+            values = tree_sensor["value"].split("&")
+
+            for i, property in enumerate(tree_sensor["controlledProperty"]):
+                temp[property] = values[i]
+        except:
+            pass
+
+        data.append(temp)
+
+    return data
 
 import uvicorn, sys, os
 
