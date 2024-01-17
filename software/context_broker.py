@@ -1,5 +1,4 @@
 import requests
-import json
 from uuid import uuid4
 from datetime import datetime
 
@@ -144,7 +143,7 @@ class ContextBroker:
 
             data["location"]["value"] = {
                 "type": "Polygon",
-                "coordinates": location
+                "coordinates": [reversedLocations]
             }
 
         self.__create_entity(data)
@@ -185,7 +184,7 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        CO2:str|None = None,
+        co2:str|None = None,
         humidity:str|None = None,
         temperature:str|None = None
     ) -> None:
@@ -193,7 +192,7 @@ class ContextBroker:
         print(f"Updating tree sensor: {deviceId}", end='...')
 
         data = [
-            CO2 if CO2 else "",
+            co2 if co2 else "",
             humidity if humidity else "",
             temperature if temperature else ""
         ]
@@ -222,17 +221,12 @@ class ContextBroker:
     def get_entity(
         self,
         entityId:str,
-        detailed:bool=False
     ) -> Dict[str, Any]:
-
-        params = {}
-        if not detailed:
-            params["options"] = "keyValues"
 
         response = requests.get(
             f"{self.context_broker_base_url}/{entityId}",
             headers={"Accept": "application/json"},
-            params=params
+            params={"options": "keyValues"}
         )
 
         if response.status_code != 200:
@@ -251,6 +245,44 @@ class ContextBroker:
             entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
 
         return entity
+
+    def get_tree_sensors(self) -> List[Dict[str, Any]]:
+
+        response = requests.get(
+            f"{self.context_broker_base_url}",
+            headers={"Accept": "application/json"},
+            params={
+                "idPattern": "tree_sensor_*",
+                "limit": 1000,
+                "options": "keyValues"
+            }
+        )
+
+        entities = response.json()
+
+        for i, entity in enumerate(entities):
+            entities[i]["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+
+        return entities
+
+    def get_wind_sensors(self) -> List[Dict[str, Any]]:
+
+        response = requests.get(
+            f"{self.context_broker_base_url}",
+            headers={"Accept": "application/json"},
+            params={
+                "idPattern": "wind_sensor_*",
+                "limit": 1000,
+                "options": "keyValues"
+            }
+        )
+
+        entities = response.json()
+
+        for i, entity in enumerate(entities):
+            entities[i]["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+
+        return entities
 
 
     #### Delete Entities ####
@@ -275,22 +307,20 @@ class ContextBroker:
 if __name__ == "__main__":
     context = ContextBroker("192.168.1.2")
 
-    context.create_tree_sensor("tree_sensor_0", (0,0), str(uuid4()))
-    context.create_wind_sensor("wind_sensor_0", (0,0), str(uuid4()))
+    context.create_tree_sensor("tree_sensor_0", (1,2), str(uuid4()))
+    context.create_wind_sensor("wind_sensor_0", (1,2), str(uuid4()))
 
     print(context.get_entity("tree_sensor_0"))
 
     context.update_tree_sensor(
         "tree_sensor_0",
         datetime.utcnow(),
-        CO2="15",
+        co2="15",
         humidity="15",
         temperature="15"
     )
 
     print(context.get_entity("tree_sensor_0"))
-
-    context.delete_entity("tree_sensor_0")
 
     print(context.get_entity("wind_sensor_0"))
 
@@ -301,16 +331,26 @@ if __name__ == "__main__":
         windSpeed="15",
     )
 
-    print(context.get_entity("wind_sensor_0", detailed=True))
+    print(context.get_entity("wind_sensor_0"))
 
-    context.delete_entity("wind_sensor_0")
+    tree_sensors = context.get_tree_sensors()
+    print(tree_sensors)
+
+    wind_sensors = context.get_wind_sensors()
+    print(wind_sensors)
+
+    for tree_sensor in tree_sensors:
+        context.delete_entity(tree_sensor["id"])
+
+    for wind_sensor in wind_sensors:
+        context.delete_entity(wind_sensor["id"])
 
     context.create_fire_forest_status(
         "fire_forest_status_0",
         False,
         0.5,
         0.9,
-        [(0,0), (0,0)]
+        [(2, 1), (4, 3), (5, -1), (2, 1)]
     )
 
     print(context.get_entity("fire_forest_status_0"))

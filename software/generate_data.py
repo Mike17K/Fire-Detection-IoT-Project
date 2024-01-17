@@ -72,8 +72,5 @@ if __name__ == "__main__":
 
     generate_wind_sensors(cb, wind_coordinates)
 
-    # for i in range(tree_grid_size ** 2):
-    #     print(cb.get_entity(f"tree_sensor_{i}"))
-
-    for i in range(len(wind_coordinates)):
-        print(cb.get_entity(f"wind_sensor_{i}"))
+    print(cb.get_tree_sensors())
+    print(cb.get_wind_sensors())
