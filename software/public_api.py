@@ -79,6 +79,29 @@ async def get_tree_sensor_values():
 
     return data
 
+@app.get("/wind")
+async def get_wind_values():
+    wind_sensors = cb.get_wind_sensors()
+
+    data = []
+
+    for wind_sensor in wind_sensors:
+        temp = {
+            "location": wind_sensor["location"]["coordinates"],
+            "windDirection": None,
+            "windSpeed": None
+        }
+        try:
+            values = wind_sensor["value"].split("&")
+            for i, property in enumerate(wind_sensor["controlledProperty"]):
+                temp[property] = values[i]
+        except:
+            pass
+
+        data.append(temp)
+
+    return data
+
 import uvicorn, sys, os
 
 if __name__ == "__main__":
