@@ -85,6 +85,3 @@ if __name__ == "__main__":
     generate_tree_sensors(cb, coord_limits, tree_grid_size)
 
     generate_wind_sensors(cb, wind_coordinates)
-
-    print(cb.get_tree_sensors())
-    print(cb.get_wind_sensors())

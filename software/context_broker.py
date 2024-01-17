@@ -11,7 +11,7 @@ class ContextBroker:
         context_broker_host:str
     ):
 
-        self.context_broker_base_url = f"http://{context_broker_host}:1026/v2/entities"
+        self.context_broker_base_url = f"http://{context_broker_host}:1026/v2"
 
 
     #### Create Entities ####
@@ -21,7 +21,7 @@ class ContextBroker:
     ) -> None:
 
         response = requests.post(
-            self.context_broker_base_url,
+            f"{self.context_broker_base_url}/entities",
             json=data
         )
 
@@ -169,7 +169,7 @@ class ContextBroker:
         }
 
         response = requests.patch(
-            f"{self.context_broker_base_url}/{deviceId}/attrs",
+            f"{self.context_broker_base_url}/entities/{deviceId}/attrs",
             json=payload
         )
 
@@ -224,7 +224,7 @@ class ContextBroker:
     ) -> Dict[str, Any]:
 
         response = requests.get(
-            f"{self.context_broker_base_url}/{entityId}",
+            f"{self.context_broker_base_url}/entities/{entityId}",
             headers={"Accept": "application/json"},
             params={"options": "keyValues"}
         )
@@ -249,7 +249,7 @@ class ContextBroker:
     def get_tree_sensors(self) -> List[Dict[str, Any]]:
 
         response = requests.get(
-            f"{self.context_broker_base_url}",
+            f"{self.context_broker_base_url}/entities",
             headers={"Accept": "application/json"},
             params={
                 "idPattern": "tree_sensor_*",
@@ -268,7 +268,7 @@ class ContextBroker:
     def get_wind_sensors(self) -> List[Dict[str, Any]]:
 
         response = requests.get(
-            f"{self.context_broker_base_url}",
+            f"{self.context_broker_base_url}/entities",
             headers={"Accept": "application/json"},
             params={
                 "idPattern": "wind_sensor_*",
@@ -294,7 +294,7 @@ class ContextBroker:
         print(f"Deleting entity: {entityId}", end='...')
 
         response = requests.delete(
-            f"{self.context_broker_base_url}/{entityId}",
+            f"{self.context_broker_base_url}/entities/{entityId}",
         )
 
         if response.status_code != 204:
@@ -307,8 +307,11 @@ class ContextBroker:
 if __name__ == "__main__":
     context = ContextBroker("192.168.1.2")
 
-    context.create_tree_sensor("tree_sensor_0", (1,2), str(uuid4()))
-    context.create_wind_sensor("wind_sensor_0", (1,2), str(uuid4()))
+    try:
+        context.create_tree_sensor("tree_sensor_0", (1,2), str(uuid4()))
+        context.create_wind_sensor("wind_sensor_0", (1,2), str(uuid4()))
+    except:
+        pass
 
     print(context.get_entity("tree_sensor_0"))
 
@@ -345,13 +348,16 @@ if __name__ == "__main__":
     for wind_sensor in wind_sensors:
         context.delete_entity(wind_sensor["id"])
 
-    context.create_fire_forest_status(
-        "fire_forest_status_0",
-        False,
-        0.5,
-        0.9,
-        [(2, 1), (4, 3), (5, -1), (2, 1)]
-    )
+    try:
+        context.create_fire_forest_status(
+            "fire_forest_status_0",
+            False,
+            0.5,
+            0.9,
+            [(2, 1), (4, 3), (5, -1), (2, 1)]
+        )
+    except:
+        pass
 
     print(context.get_entity("fire_forest_status_0"))
 
