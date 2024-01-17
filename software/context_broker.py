@@ -74,6 +74,21 @@ class ContextBroker:
 
         self.__create_entity(data)
 
+    def __reverse_coordinates(self, entity:Dict) -> Dict:
+        # convert locations from lon,lat that fiware-orion stores to the more common lat,lon
+
+        if entity["location"]["type"] == "Point":
+            entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+
+        elif entity["location"]["type"] == "Polygon":
+            newCoords = []
+            for coord in entity["location"]["coordinates"][0]:
+                newCoords.append(coord[::-1])
+
+            entity["location"]["coordinates"] = [newCoords]
+
+        return entity
+
     def create_tree_sensor(
         self,
         deviceId:str,
@@ -233,16 +248,7 @@ class ContextBroker:
             raise Exception(f"{response.status_code} {response.text}")
 
         entity = response.json()
-
-        # convert locations from lon,lat that fiware-orion stores to the more common lat,lon
-        try:
-            newLocations = []
-            for point in entity["location"]["coordinates"]:
-                newLocations.append(point[::-1])
-
-            entity["location"]["coordinates"] = newLocations
-        except:
-            entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+        entity = self.__reverse_coordinates(entity)
 
         return entity
 
@@ -284,6 +290,48 @@ class ContextBroker:
 
         return entities
 
+    def find_device_by_serial(
+        self,
+        serialNumber:str
+    ) -> Dict:
+
+        response = requests.get(
+            f"{self.context_broker_base_url}/entities",
+            headers={"Accept": "application/json"},
+            params={
+                "q": f"serialNumber=={serialNumber}",
+                "options": "keyValues"
+            }
+        )
+
+        device = response.json()[0]
+        device = self.__reverse_coordinates(device)
+
+        return device
+
+    def find_devices_by_location(
+        self,
+        point:Tuple[float, float],
+        maxDistance:int,
+    ) -> Dict:
+
+        response = requests.get(
+            f"{self.context_broker_base_url}/entities",
+            headers={"Accept": "application/json"},
+            params={
+                "georel": f"near;maxDistance:{maxDistance}",
+                "geometry": "point",
+                "coords": ','.join(map(str, point)),
+                "options": "keyValues"
+            }
+        )
+
+        devices = response.json()
+        for i, device in enumerate(devices):
+            devices[i] = self.__reverse_coordinates(device)
+
+        return devices
+
 
     #### Delete Entities ####
     def delete_entity(
@@ -308,8 +356,8 @@ if __name__ == "__main__":
     context = ContextBroker("192.168.1.2")
 
     try:
-        context.create_tree_sensor("tree_sensor_0", (1,2), str(uuid4()))
-        context.create_wind_sensor("wind_sensor_0", (1,2), str(uuid4()))
+        context.create_tree_sensor("tree_sensor_0", (1,2), "test")
+        context.create_wind_sensor("wind_sensor_0", (3,4), str(uuid4()))
     except:
         pass
 
@@ -342,12 +390,6 @@ if __name__ == "__main__":
     wind_sensors = context.get_wind_sensors()
     print(wind_sensors)
 
-    for tree_sensor in tree_sensors:
-        context.delete_entity(tree_sensor["id"])
-
-    for wind_sensor in wind_sensors:
-        context.delete_entity(wind_sensor["id"])
-
     try:
         context.create_fire_forest_status(
             "fire_forest_status_0",
@@ -362,3 +404,12 @@ if __name__ == "__main__":
     print(context.get_entity("fire_forest_status_0"))
 
     context.delete_entity("fire_forest_status_0")
+
+    print(context.find_device_by_serial("test"))
+    print(context.find_devices_by_location((3,4), 10))
+
+    for tree_sensor in tree_sensors:
+        context.delete_entity(tree_sensor["id"])
+
+    for wind_sensor in wind_sensors:
+        context.delete_entity(wind_sensor["id"])
