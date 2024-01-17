@@ -184,17 +184,17 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        co2:str|None = None,
-        humidity:str|None = None,
-        temperature:str|None = None
+        co2:float|None = None,
+        humidity:float|None = None,
+        temperature:float|None = None
     ) -> None:
 
         print(f"Updating tree sensor: {deviceId}", end='...')
 
         data = [
-            co2 if co2 else "",
-            humidity if humidity else "",
-            temperature if temperature else ""
+            str(co2) if co2 else "",
+            str(humidity) if humidity else "",
+            str(temperature) if temperature else ""
         ]
 
         self.__update_sensor(deviceId, dateObserved, data)
@@ -203,8 +203,8 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        windDirection:str|None = None,
-        windSpeed:str|None = None,
+        windDirection:int|None = None,
+        windSpeed:float|None = None,
     ) -> None:
 
         print(f"Updating wind sensor: {deviceId}", end='...')
@@ -315,9 +315,9 @@ if __name__ == "__main__":
     context.update_tree_sensor(
         "tree_sensor_0",
         datetime.utcnow(),
-        co2="15",
-        humidity="15",
-        temperature="15"
+        co2=15,
+        humidity=15,
+        temperature=15
     )
 
     print(context.get_entity("tree_sensor_0"))
@@ -327,8 +327,8 @@ if __name__ == "__main__":
     context.update_wind_sensor(
         "wind_sensor_0",
         datetime.utcnow(),
-        windDirection="15",
-        windSpeed="15",
+        windDirection=15,
+        windSpeed=15,
     )
 
     print(context.get_entity("wind_sensor_0"))
