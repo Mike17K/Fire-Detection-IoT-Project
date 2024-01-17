@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from context_broker import ContextBroker
 
@@ -7,7 +7,7 @@ cb = ContextBroker("192.168.1.2")
 
 @app.get("/tree/{entity_id}")
 @app.get("/wind/{entity_id}")
-def get_entity(entity_id):
+async def get_entity(entity_id):
     wind_sensor = cb.get_entity(entity_id)
 
     data = {
@@ -29,20 +29,31 @@ def get_entity(entity_id):
     return data
 
 @app.get("/temperature")
-async def temperature():
-    pass
-
 @app.get("/humidity")
-async def humidity():
-    pass
-
 @app.get("/co2")
-async def co2():
-    pass
+async def get_tree_sensor_value(request: Request):
+    tree_sensors = cb.get_tree_sensors()
 
-@app.get("/wind")
-async def wind():
-    pass
+    data = []
+    requestedValueName = request.url.path.lstrip('/')
+
+    for tree_sensor in tree_sensors:
+        try:
+            values = tree_sensor["value"].split("&")
+            index = tree_sensor["controlledProperty"].index(requestedValueName)
+            requestedValue = values[index]
+        except:
+            requestedValue = None
+
+        temp = {
+            "location": tree_sensor["location"]["coordinates"],
+            requestedValueName: requestedValue
+        }
+
+        data.append(temp)
+
+    return data
+
 
 import uvicorn, sys, os
 
