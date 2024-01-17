@@ -210,8 +210,8 @@ class ContextBroker:
         print(f"Updating wind sensor: {deviceId}", end='...')
 
         data = [
-            windDirection if windDirection else "",
-            windSpeed if windSpeed else "",
+            str(windDirection) if windDirection else "",
+            str(windSpeed) if windSpeed else "",
         ]
 
         self.__update_sensor(deviceId, dateObserved, data)
