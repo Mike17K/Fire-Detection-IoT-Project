@@ -46,6 +46,7 @@ async def get_tree_sensor_value(request: Request):
             requestedValue = None
 
         temp = {
+            "id": tree_sensor["id"],
             "location": tree_sensor["location"]["coordinates"],
             requestedValueName: requestedValue
         }
@@ -62,6 +63,7 @@ async def get_tree_sensor_values():
 
     for tree_sensor in tree_sensors:
         temp = {
+            "id": tree_sensor["id"],
             "location": tree_sensor["location"]["coordinates"],
             "co2": None,
             "humidity": None,
@@ -87,6 +89,7 @@ async def get_wind_values():
 
     for wind_sensor in wind_sensors:
         temp = {
+            "id": wind_sensor["id"],
             "location": wind_sensor["location"]["coordinates"],
             "windDirection": None,
             "windSpeed": None
