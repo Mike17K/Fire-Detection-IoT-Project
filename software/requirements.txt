@@ -1,6 +1,6 @@
 fastapi
 requests
-numpy
-matplotlib
 uvicorn
 paho-mqtt
+shapely
+pointpats

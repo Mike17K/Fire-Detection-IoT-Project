@@ -1,21 +1,23 @@
-import numpy as np
 from uuid import uuid4
 from datetime import datetime
 
+from shapely.geometry import Polygon
+from pointpats import random as rng
+
 from context_broker import ContextBroker
 
-from typing import Dict, Tuple, Iterable, List
+from typing import Tuple, List
 
-coord_limits = {
-    "latitude": {
-        "min": 38.28442,
-        "max": 38.31899
-    },
-    "longitude": {
-        "min": 21.88617,
-        "max": 21.96498
-    }
-}
+trees_polygon = [
+    (38.27095,21.92257),
+    (38.29897,21.98112),
+    (38.31716,21.95278),
+    (38.31635,21.91518),
+    (38.30934,21.86109),
+    (38.28941,21.88135)
+]
+
+trees_polygon = Polygon([coord[::-1] for coord in trees_polygon])
 
 wind_coordinates = [
     (38.3006, 21.9362),
@@ -26,27 +28,16 @@ wind_coordinates = [
     (38.2967, 21.9620)
 ]
 
-def generate_locations(
-    coord_limits:Dict,
-    grid_size:int
-) -> Iterable[Tuple[float, float]]:
-
-    latitudes = np.linspace(coord_limits["latitude"]["min"], coord_limits["latitude"]["max"], grid_size)
-    longitudes = np.linspace(coord_limits["longitude"]["min"], coord_limits["longitude"]["max"], grid_size)
-
-    for i in range(latitudes.size):
-        for j in range(longitudes.size):
-            location = (latitudes[i], longitudes[j])
-
-            yield location
-
 def generate_tree_sensors(
     broker_connection:ContextBroker,
-    coord_limits:Dict,
-    grid_size:int
+    polygon:Polygon,
+    num_of_sensors:int
 ) -> None:
 
-    for i, location in enumerate(generate_locations(coord_limits, grid_size)):
+    coords = rng.cluster_poisson(polygon, size=num_of_sensors, n_seeds=num_of_sensors//5, cluster_radius=0.1)
+    coords = coords.tolist()
+
+    for i, location in enumerate(coords):
         try:
             broker_connection.create_tree_sensor(f"tree_sensor_{i}", location, str(uuid4()))
             broker_connection.update_tree_sensor(
@@ -81,7 +72,6 @@ def generate_wind_sensors(
 if __name__ == "__main__":
     cb = ContextBroker("192.168.1.2")
 
-    tree_grid_size = 10
-    generate_tree_sensors(cb, coord_limits, tree_grid_size)
+    generate_tree_sensors(cb, trees_polygon, 200)
 
     generate_wind_sensors(cb, wind_coordinates)
