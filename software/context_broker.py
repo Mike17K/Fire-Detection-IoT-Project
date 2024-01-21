@@ -355,8 +355,65 @@ class ContextBroker:
         print("Success")
 
 
+    #### Subscriptions ####
+    def subscribe_to_device_updates(self, host):
+        print(f"Creating subscription", end="...")
+
+        subscription = {
+            "subject": {
+                "entities": [
+                    {
+                        "idPattern": ".*",
+                        "type": "Device"
+                    }
+                ]
+            },
+            "notification": {
+                "http": {
+                    "url": host
+                },
+                "attrsFormat": "keyValues"
+            }
+        }
+
+        response = requests.post(
+            f"{self.context_broker_base_url}/subscriptions",
+            json=subscription,
+        )
+
+        if response.status_code != 201:
+            print("Fail")
+            raise Exception(f"{response.status_code} {response.text}")
+
+        print("Success")
+
+    def list_subscriptions(self):
+        response = requests.get(
+            f"{self.context_broker_base_url}/subscriptions",
+        )
+
+        subscriptions = response.json()
+
+        return subscriptions
+
+    def delete_subscription(self, subscription_id):
+        print(f"Deleting subscription: {subscription_id}", end="...")
+
+        response = requests.delete(
+            f"{self.context_broker_base_url}/subscriptions/{subscription_id}",
+        )
+
+        if response.status_code != 204:
+            print("Fail")
+            raise Exception(f"{response.status_code} {response.text}")
+
+        print("Success")
+
+
 if __name__ == "__main__":
     context = ContextBroker("192.168.1.2")
+
+    context.subscribe_to_device_updates("http://192.168.1.5:3001")
 
     try:
         context.create_tree_sensor("tree_sensor_0", (1,2), "test")
@@ -388,10 +445,10 @@ if __name__ == "__main__":
     print(context.get_entity("wind_sensor_0"))
 
     tree_sensors = context.get_tree_sensors()
-    print(tree_sensors)
+    # print(tree_sensors)
 
     wind_sensors = context.get_wind_sensors()
-    print(wind_sensors)
+    # print(wind_sensors)
 
     try:
         context.create_fire_forest_status(
@@ -416,3 +473,9 @@ if __name__ == "__main__":
 
     for wind_sensor in wind_sensors:
         context.delete_entity(wind_sensor["id"])
+
+    subscriptions = context.list_subscriptions()
+    # print(json.dumps(subscriptions, indent=4))
+
+    for subscription in subscriptions:
+        context.delete_subscription(subscription["id"])
