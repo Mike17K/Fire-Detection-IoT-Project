@@ -113,4 +113,4 @@ if __name__ == "__main__":
 
     file = os.path.basename(sys.argv[0]).rstrip('.py')
 
-    uvicorn.run(f"{file}:app", host="0.0.0.0", port=80, reload=reload)
+    uvicorn.run(f"{file}:app", host="0.0.0.0", port=8080, reload=reload)
