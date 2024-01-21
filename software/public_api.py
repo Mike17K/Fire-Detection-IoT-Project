@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from datetime import datetime
@@ -8,6 +9,19 @@ from context_broker import ContextBroker
 
 app = FastAPI()
 cb = ContextBroker("192.168.1.2")
+
+origins = [
+    "http://localhost:3000",
+    "fireguard.mikekaipis.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=origins,
+    allow_headers=origins
+)
 
 
 #### MODELS ####
