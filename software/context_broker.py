@@ -304,10 +304,13 @@ class ContextBroker:
             }
         )
 
-        device = response.json()[0]
-        device = self.__reverse_coordinates(device)
+        try:
+            device = response.json()[0]
+            device = self.__reverse_coordinates(device)
 
-        return device
+            return device
+        except:
+            return {}
 
     def find_devices_by_location(
         self,
