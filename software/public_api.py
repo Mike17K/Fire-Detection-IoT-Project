@@ -96,7 +96,7 @@ class Temperature(BaseModel):
 
 #### UTILITY FUNCTIONS ####
 
-async def transform_entity(entity:Dict) -> Dict:
+def transform_entity(entity:Dict) -> Dict:
 
     data = {
         "dateObserved": entity["dateObserved"],
@@ -116,7 +116,7 @@ async def transform_entity(entity:Dict) -> Dict:
 
     return data
 
-async def get_trees_attribute(attributeName:str) -> List[Dict]:
+def get_trees_attribute(attributeName:str) -> List[Dict]:
     tree_sensors = cb.get_tree_sensors()
 
     data = []
@@ -146,27 +146,27 @@ async def get_trees_attribute(attributeName:str) -> List[Dict]:
 @app.get("/trees/{entity_id}")
 async def get_tree(entity_id) -> Tree:
     entity = cb.get_entity(entity_id)
-    return Tree.fromDict(await transform_entity(entity))
+    return Tree.fromDict(transform_entity(entity))
 
 @app.get("/wind/{entity_id}")
 async def get_wind(entity_id) -> Wind:
     entity = cb.get_entity(entity_id)
-    return Wind.fromDict(await transform_entity(entity))
+    return Wind.fromDict(transform_entity(entity))
 
 
 @app.get("/co2")
 async def get_co2() -> List[Co2]:
-    data = await get_trees_attribute("co2")
+    data = get_trees_attribute("co2")
     return list(map(Co2.fromDict, data))
 
 @app.get("/humidity")
 async def get_humidity() -> List[Humidity]:
-    data = await get_trees_attribute("co2")
+    data = get_trees_attribute("humidity")
     return list(map(Humidity.fromDict, data))
 
 @app.get("/temperature")
 async def get_temperature() -> List[Temperature]:
-    data = await get_trees_attribute("co2")
+    data = get_trees_attribute("temperature")
     return list(map(Temperature.fromDict, data))
 
 
@@ -177,7 +177,7 @@ async def get_tree_sensor_values() -> List[Tree]:
     trees = []
 
     for tree_sensor in tree_sensors:
-        trees.append(Tree.fromDict(await transform_entity(tree_sensor)))
+        trees.append(Tree.fromDict(transform_entity(tree_sensor)))
 
     return trees
 
@@ -188,7 +188,7 @@ async def get_wind_values() -> List[Wind]:
     wind = []
 
     for wind_sensor in wind_sensors:
-        wind.append(Wind.fromDict(await transform_entity(wind_sensor)))
+        wind.append(Wind.fromDict(transform_entity(wind_sensor)))
 
     return wind
 
