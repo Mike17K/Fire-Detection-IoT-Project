@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 from datetime import datetime
@@ -8,6 +8,9 @@ from context_broker import ContextBroker
 
 app = FastAPI()
 cb = ContextBroker("192.168.1.2")
+
+
+#### MODELS ####
 
 class Tree(BaseModel):
     dateObserved: datetime
@@ -90,14 +93,14 @@ class Temperature(BaseModel):
             temperature=data["temperature"],
         )
 
-@app.get("/trees/{entity_id}")
-@app.get("/wind/{entity_id}")
-async def get_entity(entity_id) -> Tree|Wind:
-    entity = cb.get_entity(entity_id)
+
+#### UTILITY FUNCTIONS ####
+
+async def transform_entity(entity:Dict) -> Dict:
 
     data = {
         "dateObserved": entity["dateObserved"],
-        "id": entity_id,
+        "id": entity["id"],
         "location": entity["location"]["coordinates"],
     }
 
@@ -111,47 +114,61 @@ async def get_entity(entity_id) -> Tree|Wind:
     for i, field in enumerate(entity_fields):
         data[field] = tree_value[i]
 
-    try:
-        return Tree.fromDict(data)
-    except:
-        return Wind.fromDict(data)
+    return data
 
-
-@app.get("/temperature")
-@app.get("/humidity")
-@app.get("/co2")
-async def get_tree_sensor_value(request: Request) -> List[Co2|Humidity|Temperature]:
+async def get_trees_attribute(attributeName:str) -> List[Dict]:
     tree_sensors = cb.get_tree_sensors()
 
     data = []
-    requestedValueName = request.url.path.lstrip('/')
 
     for tree_sensor in tree_sensors:
         try:
             values = tree_sensor["value"].split("&")
-            index = tree_sensor["controlledProperty"].index(requestedValueName)
-            requestedValue = values[index]
+            index = tree_sensor["controlledProperty"].index(attributeName)
+            attribute = values[index]
         except:
-            requestedValue = None
+            attribute = None
 
         temp = {
             "dateObserved": tree_sensor["dateObserved"],
             "id": tree_sensor["id"],
             "location": tree_sensor["location"]["coordinates"],
-            requestedValueName: requestedValue
+            attributeName: attribute
         }
-
-        match requestedValue:
-            case "co2":
-                temp = Co2.fromDict(temp)
-            case "humidity":
-                temp = Humidity.fromDict(temp)
-            case "temperature":
-                temp = Temperature.fromDict(temp)
 
         data.append(temp)
 
     return data
+
+
+#### ROUTES ####
+
+@app.get("/trees/{entity_id}")
+async def get_tree(entity_id) -> Tree:
+    entity = cb.get_entity(entity_id)
+    return Tree.fromDict(await transform_entity(entity))
+
+@app.get("/wind/{entity_id}")
+async def get_wind(entity_id) -> Wind:
+    entity = cb.get_entity(entity_id)
+    return Wind.fromDict(await transform_entity(entity))
+
+
+@app.get("/co2")
+async def get_co2() -> List[Co2]:
+    data = await get_trees_attribute("co2")
+    return list(map(Co2.fromDict, data))
+
+@app.get("/humidity")
+async def get_humidity() -> List[Humidity]:
+    data = await get_trees_attribute("co2")
+    return list(map(Humidity.fromDict, data))
+
+@app.get("/temperature")
+async def get_temperature() -> List[Temperature]:
+    data = await get_trees_attribute("co2")
+    return list(map(Temperature.fromDict, data))
+
 
 @app.get("/trees")
 async def get_tree_sensor_values() -> List[Tree]:
@@ -160,23 +177,7 @@ async def get_tree_sensor_values() -> List[Tree]:
     trees = []
 
     for tree_sensor in tree_sensors:
-        temp = {
-            "dateObserved": tree_sensor["dateObserved"],
-            "id": tree_sensor["id"],
-            "location": tree_sensor["location"]["coordinates"],
-            "co2": None,
-            "humidity": None,
-            "temperature": None,
-        }
-        try:
-            values = tree_sensor["value"].split("&")
-
-            for i, property in enumerate(tree_sensor["controlledProperty"]):
-                temp[property] = values[i]
-        except:
-            pass
-
-        trees.append(Tree.fromDict(temp))
+        trees.append(Tree.fromDict(await transform_entity(tree_sensor)))
 
     return trees
 
@@ -187,21 +188,7 @@ async def get_wind_values() -> List[Wind]:
     wind = []
 
     for wind_sensor in wind_sensors:
-        temp = {
-            "dateObserved": wind_sensor["dateObserved"],
-            "id": wind_sensor["id"],
-            "location": wind_sensor["location"]["coordinates"],
-            "windDirection": None,
-            "windSpeed": None
-        }
-        try:
-            values = wind_sensor["value"].split("&")
-            for i, property in enumerate(wind_sensor["controlledProperty"]):
-                temp[property] = values[i]
-        except:
-            pass
-
-        wind.append(Wind.fromDict(temp))
+        wind.append(Wind.fromDict(await transform_entity(wind_sensor)))
 
     return wind
 
