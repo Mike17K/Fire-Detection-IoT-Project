@@ -1,8 +1,10 @@
 from uuid import uuid4
 from datetime import datetime
 
-from shapely.geometry import Polygon
-from pointpats import random as rng
+from shapely.geometry import Polygon, Point
+from shapely.prepared import prep
+
+import numpy as np
 
 from context_broker import ContextBroker
 
@@ -28,14 +30,40 @@ wind_coordinates = [
     (38.2967, 21.9620)
 ]
 
+def gen_points_in_polygon(
+    polygon:Polygon,
+    num_of_points:int
+) -> List[Tuple[float, float]]:
+
+    min_x, min_y, max_x, max_y = polygon.bounds
+
+    spacing = int(num_of_points ** 0.5)
+
+    points = []
+    while len(points) < num_of_points:
+        x_spacing = (max_x - min_x) / spacing
+        y_spacing = (max_y - min_y) / spacing
+
+        x = np.arange(np.floor(min_x), int(np.ceil(max_x)), x_spacing)
+        y = np.arange(np.floor(min_y), int(np.ceil(max_y)), y_spacing)
+
+        xx, yy = np.meshgrid(x,y)
+
+        pts = [Point(X,Y) for X,Y in zip(xx.ravel(),yy.ravel())]
+
+        points = list(filter(prep(polygon).contains, pts))
+
+        spacing += 1
+
+    return [(point.x, point.y) for point in points]
+
 def generate_tree_sensors(
     broker_connection:ContextBroker,
     polygon:Polygon,
     num_of_sensors:int
 ) -> None:
 
-    coords = rng.cluster_poisson(polygon, size=num_of_sensors, n_seeds=num_of_sensors//5, cluster_radius=0.1)
-    coords = coords.tolist()
+    coords = gen_points_in_polygon(polygon, num_of_sensors)
 
     for i, location in enumerate(coords):
         try:
@@ -72,6 +100,6 @@ def generate_wind_sensors(
 if __name__ == "__main__":
     cb = ContextBroker("192.168.1.2")
 
-    generate_tree_sensors(cb, trees_polygon, 200)
+    generate_tree_sensors(cb, trees_polygon, 150)
 
     generate_wind_sensors(cb, wind_coordinates)
