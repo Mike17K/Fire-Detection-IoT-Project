@@ -172,6 +172,17 @@ class ContextBroker:
         data:List[str]
     ) -> None:
 
+        entity = self.get_entity(deviceId)
+
+        try:
+            oldData = entity["value"].split("&")
+
+            for i in range(len(data)):
+                if data[i] == "":
+                    data[i] = oldData[i]
+        except:
+            pass
+
         payload = {
             "dateObserved": {
                 "type": "DateTime",
