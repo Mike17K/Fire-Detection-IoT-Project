@@ -3,4 +3,4 @@ requests
 uvicorn
 paho-mqtt
 shapely
-pointpats
+perlin_noise

@@ -1,10 +1,13 @@
 from uuid import uuid4
 from datetime import datetime
+import random
 
 from shapely.geometry import Polygon, Point
 from shapely.prepared import prep
 
 import numpy as np
+
+from perlin_noise import PerlinNoise
 
 from context_broker import ContextBroker
 
@@ -29,6 +32,31 @@ wind_coordinates = [
     (38.3127, 21.9374),
     (38.2967, 21.9620)
 ]
+
+co2_stats = {
+    "mean": 380,
+    "deviation": 20,
+}
+
+humidity_stats = {
+    "mean": 50,
+    "deviation": 10,
+}
+
+temperature_stats = {
+    "mean": 20,
+    "deviation": 5,
+}
+
+windDirection_stats = {
+    "mean": 15,
+    "deviation": 2,
+}
+
+windSpeed_stats = {
+    "mean": 15,
+    "deviation": 2,
+}
 
 def gen_points_in_polygon(
     polygon:Polygon,
@@ -95,11 +123,55 @@ def generate_wind_sensors(
         except Exception as e:
             print(e)
 
+def steady_state_tree_values(
+    broker_connection:ContextBroker,
+    co2_mean:float,
+    co2_deviation:float,
+    humidity_mean:float,
+    humidity_deviation:float,
+    temperature_mean:float,
+    temperature_deviation:float,
+    seed:int
+) -> None:
+
+    co2_noise = PerlinNoise(octaves=1, seed=2*seed)
+    humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
+    temperature_noise = PerlinNoise(octaves=1, seed=5*seed)
+
+    trees = broker_connection.get_tree_sensors()
+    random.shuffle(trees)
+
+    for tree in trees:
+        tree_location = tree["location"]["coordinates"]
+
+        tree_co2 = co2_mean + co2_noise(tree_location) * co2_deviation
+        tree_co2 = float(f"{tree_co2:.2f}")
+
+        tree_humidity = humidity_mean + humidity_noise(tree_location) * humidity_deviation
+        tree_humidity = float(f"{tree_humidity:.2f}")
+
+        tree_temp = temperature_mean + temperature_noise(tree_location) * temperature_deviation
+        tree_temp = float(f"{tree_temp:.2f}")
+
+        broker_connection.update_tree_sensor(tree["id"], dateObserved=datetime.utcnow(), temperature=tree_temp)
 
 
 if __name__ == "__main__":
+    random.seed(0)
+
     cb = ContextBroker("192.168.1.2")
 
     generate_tree_sensors(cb, trees_polygon, 150)
 
     generate_wind_sensors(cb, wind_coordinates)
+
+    steady_state_tree_values(
+        cb,
+        co2_stats["mean"],
+        co2_stats["deviation"],
+        humidity_stats["mean"],
+        humidity_stats["deviation"],
+        temperature_stats["mean"],
+        temperature_stats["deviation"],
+        1
+    )
