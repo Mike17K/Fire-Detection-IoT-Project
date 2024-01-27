@@ -105,7 +105,7 @@ autoencoder.compile(optimizer='adam', loss='mae')
 
 # load saved model if available
 try:
-  autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\autoencoder")
+  autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\model\\autoencoder")
   print("Model found, loading it")
 except:
   print("No model found, creating a new one")
@@ -119,7 +119,7 @@ history = autoencoder.fit(normal_train_data, normal_train_data,
           shuffle=True)
 
 # save model to file
-autoencoder.save("\\".join(__file__.split("\\")[:-1])+f"\\autoencoder")
+autoencoder.save("\\".join(__file__.split("\\")[:-1])+f"\\model\\autoencoder")
 
 plt.plot(history.history["loss"], label="Training Loss")
 plt.plot(history.history["val_loss"], label="Validation Loss")
