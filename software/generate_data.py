@@ -11,8 +11,6 @@ from perlin_noise import PerlinNoise
 
 from context_broker import ContextBroker
 
-from typing import Tuple, List
-
 trees_polygon = [
     (38.27095,21.92257),
     (38.29897,21.98112),
@@ -24,14 +22,14 @@ trees_polygon = [
 
 trees_polygon = Polygon([coord[::-1] for coord in trees_polygon])
 
-wind_coordinates = [
+wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.3006, 21.9362),
     (38.3138, 21.8767),
     (38.3014, 21.9070),
     (38.2790, 21.9248),
     (38.3127, 21.9374),
     (38.2967, 21.9620)
-]
+]]
 
 co2_stats = {
     "mean": 380,
@@ -61,7 +59,7 @@ windSpeed_stats = {
 def gen_points_in_polygon(
     polygon:Polygon,
     num_of_points:int
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
 
     min_x, min_y, max_x, max_y = polygon.bounds
 
@@ -108,7 +106,7 @@ def generate_tree_sensors(
 
 def generate_wind_sensors(
     broker_connection:ContextBroker,
-    wind_coordinates:List[Tuple[float, float]],
+    wind_coordinates:list[tuple[float, float]],
 ) -> None:
 
     for i, location in enumerate(wind_coordinates):
