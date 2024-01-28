@@ -110,7 +110,25 @@ class Temperature(BaseModel):
 
 #### UTILITY FUNCTIONS ####
 
-def transform_entity(entity:Dict) -> Dict:
+def reverse_entity_location(entity:Dict) -> Dict:
+    # reverse coordinates from lon lat to the lat lon format for frontend use
+    if entity["location"]["type"] == "Point":
+        entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
+
+    elif entity["location"]["type"] == "Polygon":
+        reversed_coords = []
+        for segment in entity["location"]["coordinates"]:
+            reversed_segment = []
+            for point in segment:
+                reversed_segment.append(point[::-1])
+            reversed_coords.append(reversed_segment)
+        entity["location"]["coordinates"] = reversed_coords
+
+    return entity
+
+
+def transform_device(entity:Dict) -> Dict:
+    entity = reverse_entity_location(entity)
 
     data = {
         "dateObserved": entity["dateObserved"],
@@ -136,6 +154,7 @@ def get_trees_attribute(attributeName:str) -> List[Dict]:
     data = []
 
     for tree_sensor in tree_sensors:
+        tree_sensor = reverse_entity_location(tree_sensor)
         try:
             values = tree_sensor["value"].split("&")
             index = tree_sensor["controlledProperty"].index(attributeName)
@@ -160,12 +179,12 @@ def get_trees_attribute(attributeName:str) -> List[Dict]:
 @app.get("/trees/{entity_id}")
 async def get_tree(entity_id) -> Tree:
     entity = cb.get_entity(entity_id)
-    return Tree.fromDict(transform_entity(entity))
+    return Tree.fromDict(transform_device(entity))
 
 @app.get("/wind/{entity_id}")
 async def get_wind(entity_id) -> Wind:
     entity = cb.get_entity(entity_id)
-    return Wind.fromDict(transform_entity(entity))
+    return Wind.fromDict(transform_device(entity))
 
 
 @app.get("/co2")
@@ -191,7 +210,7 @@ async def get_tree_sensor_values() -> List[Tree]:
     trees = []
 
     for tree_sensor in tree_sensors:
-        trees.append(Tree.fromDict(transform_entity(tree_sensor)))
+        trees.append(Tree.fromDict(transform_device(tree_sensor)))
 
     return trees
 
@@ -202,7 +221,7 @@ async def get_wind_values() -> List[Wind]:
     wind = []
 
     for wind_sensor in wind_sensors:
-        wind.append(Wind.fromDict(transform_entity(wind_sensor)))
+        wind.append(Wind.fromDict(transform_device(wind_sensor)))
 
     return wind
 
