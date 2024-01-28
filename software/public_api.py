@@ -12,15 +12,15 @@ cb = ContextBroker("192.168.1.2")
 
 origins = [
     "http://localhost:3000",
-    "fireguard.mikekaipis.com"
+    "https://fireguard.mikekaipis.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=origins,
-    allow_headers=origins
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 
