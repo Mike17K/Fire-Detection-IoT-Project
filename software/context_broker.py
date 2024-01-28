@@ -49,7 +49,7 @@ class ContextBroker:
                 "type": "geo:json",
                 "value": {
                     "type": "Point",
-                    "coordinates": location[::-1] # fiware-orion stores locations as lon,lat instead of the common lat,lon
+                    "coordinates": location
                 }
             },
             "serialNumber": {
@@ -74,20 +74,6 @@ class ContextBroker:
 
         self.__create_entity(data)
 
-    def __reverse_coordinates(self, entity:Dict) -> Dict:
-        # convert locations from lon,lat that fiware-orion stores to the more common lat,lon
-
-        if entity["location"]["type"] == "Point":
-            entity["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
-
-        elif entity["location"]["type"] == "Polygon":
-            newCoords = []
-            for coord in entity["location"]["coordinates"][0]:
-                newCoords.append(coord[::-1])
-
-            entity["location"]["coordinates"] = [newCoords]
-
-        return entity
 
     def create_tree_sensor(
         self,
@@ -148,17 +134,12 @@ class ContextBroker:
         if len(location) == 1:
             data["location"]["value"] = {
                 "type": "Point",
-                "coordinates": location[0][::-1] # fiware-orion stores locations as lon,lat instead of the common lat,lon
+                "coordinates": location[0]
             }
         else:
-            # fiware-orion stores locations as lon,lat instead of the common lat,lon
-            reversedLocations = []
-            for point in location:
-                reversedLocations.append(point[::-1])
-
             data["location"]["value"] = {
                 "type": "Polygon",
-                "coordinates": [reversedLocations]
+                "coordinates": [location]
             }
 
         self.__create_entity(data)
@@ -259,7 +240,6 @@ class ContextBroker:
             raise Exception(f"{response.status_code} {response.text}")
 
         entity = response.json()
-        entity = self.__reverse_coordinates(entity)
 
         return entity
 
@@ -277,9 +257,6 @@ class ContextBroker:
 
         entities = response.json()
 
-        for i, entity in enumerate(entities):
-            entities[i]["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
-
         return entities
 
     def get_wind_sensors(self) -> List[Dict[str, Any]]:
@@ -295,9 +272,6 @@ class ContextBroker:
         )
 
         entities = response.json()
-
-        for i, entity in enumerate(entities):
-            entities[i]["location"]["coordinates"] = entity["location"]["coordinates"][::-1]
 
         return entities
 
@@ -317,7 +291,6 @@ class ContextBroker:
 
         try:
             device = response.json()[0]
-            device = self.__reverse_coordinates(device)
 
             return device
         except:
@@ -341,8 +314,6 @@ class ContextBroker:
         )
 
         devices = response.json()
-        for i, device in enumerate(devices):
-            devices[i] = self.__reverse_coordinates(device)
 
         return devices
 
