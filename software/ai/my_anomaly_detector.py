@@ -88,12 +88,12 @@ class AnomalyDetector(Model):
       layers.Dense(30, activation="sigmoid")]) # 30 = 10 sensors * 3 values
   
   def save(self, path):
-    self.encoder.save(path + "_encoder.h5")
-    self.decoder.save(path + "_decoder.h5")
+    self.encoder.save(path + "_encoder.keras")
+    self.decoder.save(path + "_decoder.keras")
   
   def load(self, path):
-    self.encoder = tf.keras.models.load_model(path + "_encoder.h5")
-    self.decoder = tf.keras.models.load_model(path + "_decoder.h5")
+    self.encoder = tf.keras.models.load_model(path + "_encoder.keras")
+    self.decoder = tf.keras.models.load_model(path + "_decoder.keras")
 
   def call(self, x):
     encoded = self.encoder(x)

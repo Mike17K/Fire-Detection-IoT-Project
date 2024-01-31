@@ -58,10 +58,10 @@ labels = labels[p]
 combined_data = np.concatenate((labels, data), axis=1)
 
 # for each column, find the min and max value and normalize the data of the column
+min_val = [0,0,0] # temp, hum, co2
+max_val = [200,100,500] # temp, hum, co2
 for i in range(1, combined_data.shape[1]):
-    min_val = np.min(combined_data[:,i])
-    max_val = np.max(combined_data[:,i])
-    combined_data[:,i] = (combined_data[:,i] - min_val) / (max_val - min_val)
+    combined_data[:,i] = (combined_data[:,i] - min_val[(i-1)%3]) / (max_val[(i-1)%3] - min_val[(i-1)%3])
 
 # combine data and labels, with labels as first column
 
