@@ -1,7 +1,8 @@
+from model import AnomalyDetector
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-import tensorflow as tf
+
 
 # load from csv
 dataframe = pd.read_csv("\\".join(__file__.split("\\")[:-2])+f"\\data\\data.csv", header=None)
@@ -20,9 +21,6 @@ train_labels = labels[:int(0.8*SAMPLES_SIZE)]
 
 
 # Plot a normal ECG.
-N = 200
-N = min(N, SAMPLES_SIZE)
-
 print("Train data shape: ", train_data.shape)
 print("Train labels shape: ", train_labels.shape)
 print("Test data shape: ", test_data.shape)
@@ -38,45 +36,6 @@ for i in range(len(train_labels)):
         anomalous_train_data.append(train_data[i])
 normal_train_data = np.array(normal_train_data)
 anomalous_train_data = np.array(anomalous_train_data)
-
-# Plot a normal ECG.
-N = 200
-N = min(N, len(normal_train_data))
-
-# plt.grid()
-# plt.plot(np.arange(N), normal_train_data[:N,0], color='red')
-# plt.plot(np.arange(N), normal_train_data[:N,1], color='blue')
-# plt.plot(np.arange(N), normal_train_data[:N,2], color='green')
-# plt.title("A Normal ECG")
-# plt.show()
-
-
-# Build the model
-
-class AnomalyDetector(tf.keras.models.Model):
-  def __init__(self):
-    super(AnomalyDetector, self).__init__()
-    self.encoder = tf.keras.Sequential([
-      tf.keras.layers.Dense(30, activation="relu"), # 30 = 10 sensors * 3 values
-      tf.keras.layers.Dense(16, activation="relu"),
-      tf.keras.layers.Dense(8, activation="relu")])
-
-    self.decoder = tf.keras.Sequential([
-      tf.keras.layers.Dense(16, activation="relu"),
-      tf.keras.layers.Dense(30, activation="sigmoid")]) # 30 = 10 sensors * 3 values
-  
-  def save(self, path):
-    self.encoder.save(path + "_encoder.keras")
-    self.decoder.save(path + "_decoder.keras")
-  
-  def load(self, path):
-    self.encoder = tf.keras.models.load_model(path + "_encoder.keras")
-    self.decoder = tf.keras.models.load_model(path + "_decoder.keras")
-
-  def call(self, x):
-    encoded = self.encoder(x)
-    decoded = self.decoder(encoded)
-    return decoded
 
 autoencoder = AnomalyDetector()
 autoencoder.compile(optimizer='adam', loss='mae')

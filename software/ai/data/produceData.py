@@ -26,21 +26,23 @@ def smooth_random_changes_2d(shape, smoothness):
     return smoothness * noise
 
 SAMPLES_SIZE = 1000
-NUMBER_OF_SENSORS = 10
+NUMBER_OF_SENSORS = 150
+min_val = [0,0,0] # temp, hum, co2
+max_val = [1000,100,800] # temp, hum, co2
 
 # Create Normal Dataset Dummy
-temperatures_normal = 20+5*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
-humidity_normal = 100+50*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
-co2_normal = 250+20*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1 ) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+temperatures_normal = 20+10*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+humidity_normal = 50+20*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+co2_normal = 400+100*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1 ) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
 
 data_normal = np.concatenate((temperatures_normal, humidity_normal, co2_normal), axis=1)
 
 labels_normal = np.zeros((SAMPLES_SIZE, 1))
 
 # Create Anomalous Dataset Dummy
-temperatures_anomalous = 40+23*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
-humidity_anomalous = 20+10*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
-co2_anomalous = 400+100*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+temperatures_anomalous = 500+300*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+humidity_anomalous = 10+10*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
+co2_anomalous = 800+200*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1)+ 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)
 
 data_anomalous = np.concatenate((temperatures_anomalous, humidity_anomalous, co2_anomalous), axis=1)
 
@@ -58,8 +60,6 @@ labels = labels[p]
 combined_data = np.concatenate((labels, data), axis=1)
 
 # for each column, find the min and max value and normalize the data of the column
-min_val = [0,0,0] # temp, hum, co2
-max_val = [200,100,500] # temp, hum, co2
 for i in range(1, combined_data.shape[1]):
     combined_data[:,i] = (combined_data[:,i] - min_val[(i-1)%3]) / (max_val[(i-1)%3] - min_val[(i-1)%3])
 
