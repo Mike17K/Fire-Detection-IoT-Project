@@ -4,3 +4,4 @@ uvicorn
 paho-mqtt
 shapely
 perlin_noise
+tensorflow
