@@ -10,7 +10,7 @@ from tensorflow.keras.datasets import fashion_mnist
 from tensorflow.keras.models import Model
 
 # load from csv
-dataframe = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\data\\data.csv", header=None)
+dataframe = pd.read_csv("\\".join(__file__.split("\\")[:-2])+f"\\data\\data.csv", header=None)
 
 SAMPLES_SIZE = dataframe.shape[0]
 
@@ -28,22 +28,6 @@ train_labels = labels[:int(0.8*SAMPLES_SIZE)]
 # Plot a normal ECG.
 N = 200
 N = min(N, SAMPLES_SIZE)
-
-# plt.grid()
-# plt.plot(np.arange(N), data_normal[:N,0], color='red')
-# plt.plot(np.arange(N), data_normal[:N,1], color='blue')
-# plt.plot(np.arange(N), data_normal[:N,2], color='green')
-# plt.title("A Normal ECG")
-# plt.show()
-
-# # Plot an anomalous ECG.
-
-# plt.grid()
-# plt.plot(np.arange(N), data_anomalous[:N,0], color='red')
-# plt.plot(np.arange(N), data_anomalous[:N,1], color='blue')
-# plt.plot(np.arange(N), data_anomalous[:N,2], color='green')
-# plt.title("An Anomalous ECG")
-# plt.show()
 
 print("Train data shape: ", train_data.shape)
 print("Train labels shape: ", train_labels.shape)
@@ -105,7 +89,7 @@ autoencoder.compile(optimizer='adam', loss='mae')
 
 # load saved model if available
 try:
-  autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\model\\autoencoder")
+  autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\cache\\autoencoder")
   print("Model found, loading it")
 except:
   print("No model found, creating a new one")
@@ -119,7 +103,7 @@ history = autoencoder.fit(normal_train_data, normal_train_data,
           shuffle=True)
 
 # save model to file
-autoencoder.save("\\".join(__file__.split("\\")[:-1])+f"\\model\\autoencoder")
+autoencoder.save("\\".join(__file__.split("\\")[:-1])+f"\\cache\\autoencoder")
 
 plt.plot(history.history["loss"], label="Training Loss")
 plt.plot(history.history["val_loss"], label="Validation Loss")

@@ -68,3 +68,32 @@ for i in range(1, combined_data.shape[1]):
 filepath = "\\".join(__file__.split("\\")[:-1])+f"\\data.csv"
 # write data to file
 np.savetxt(filepath, combined_data, delimiter=",")
+
+
+# Plot data
+
+N = 200
+
+# Plot Normal ECG
+plt.subplot(1, 2, 1)
+plt.grid()
+plt.plot(np.arange(N), data_normal[:N, 0], color='red', label='Temperature')
+plt.plot(np.arange(N), data_normal[:N, 10], color='blue', label='humidity')
+plt.plot(np.arange(N), data_normal[:N, 20], color='green', label='co2')
+plt.title("A Normal ECG")
+plt.legend()
+
+# Plot Anomalous ECG
+plt.subplot(1, 2, 2)
+plt.grid()
+plt.plot(np.arange(N), data_anomalous[:N, 0], color='red', label='temperature')
+plt.plot(np.arange(N), data_anomalous[:N, 10], color='blue', label='humidity')
+plt.plot(np.arange(N), data_anomalous[:N, 20], color='green', label='co2')
+plt.title("An Anomalous ECG")
+plt.legend()
+
+# Adjust layout to prevent overlapping
+plt.tight_layout()
+
+# Show the plots
+plt.show()
