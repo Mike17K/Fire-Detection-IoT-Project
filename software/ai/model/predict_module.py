@@ -1,24 +1,17 @@
-from matplotlib import pyplot as plt
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 
-from sklearn.model_selection import train_test_split
-from tensorflow.keras import layers, losses
-from tensorflow.keras.datasets import fashion_mnist
-from tensorflow.keras.models import Model
-
-class AnomalyDetector(Model):
+class AnomalyDetector(tf.keras.models.Model):
   def __init__(self):
     super(AnomalyDetector, self).__init__()
     self.encoder = tf.keras.Sequential([
-      layers.Dense(30, activation="relu"), # 30 = 10 sensors * 3 values
-      layers.Dense(16, activation="relu"),
-      layers.Dense(8, activation="relu")])
+      tf.keras.layers.Dense(30, activation="relu"), # 30 = 10 sensors * 3 values
+      tf.keras.layers.Dense(16, activation="relu"),
+      tf.keras.layers.Dense(8, activation="relu")])
 
     self.decoder = tf.keras.Sequential([
-      layers.Dense(16, activation="relu"),
-      layers.Dense(30, activation="sigmoid")]) # 30 = 10 sensors * 3 values
+      tf.keras.layers.Dense(16, activation="relu"),
+      tf.keras.layers.Dense(30, activation="sigmoid")]) # 30 = 10 sensors * 3 values
   
   def save(self, path):
     self.encoder.save(path + "_encoder.keras")
