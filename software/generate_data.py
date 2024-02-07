@@ -46,12 +46,12 @@ temperature_stats = {
     "deviation": 5,
 }
 
-windDirection_stats = {
+wind_direction_stats = {
     "mean": 15,
     "deviation": 2,
 }
 
-windSpeed_stats = {
+wind_speed_stats = {
     "mean": 15,
     "deviation": 2,
 }
@@ -137,6 +137,32 @@ def steady_state_tree_values(
 
         broker_connection.update_tree_sensor(tree["id"], dateObserved=datetime.utcnow(), co2=tree_co2, humidity=tree_humidity, temperature=tree_temp)
 
+def steady_state_wind_values(
+    broker_connection:ContextBroker,
+    wind_direction_stats:dict,
+    wind_speed_stats:dict,
+    seed:int
+) -> None:
+
+    wind_direction_noise = PerlinNoise(octaves=1, seed=2*seed)
+    wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
+
+    wind_sensors = broker_connection.get_wind_sensors()
+    random.shuffle(wind_sensors)
+
+    for wind in wind_sensors:
+        wind_location = wind["location"]["coordinates"]
+
+        wind_direction = wind_direction_stats["mean"] + wind_direction_noise(wind_location) * wind_direction_stats["deviation"]
+        wind_direction = int(wind_direction)
+
+        wind_speed = wind_speed_stats["mean"] + wind_speed_noise(wind_location) * wind_speed_stats["deviation"]
+        wind_speed = float(f"{wind_speed:.2f}")
+
+        print(wind["id"], wind_direction, wind_speed)
+
+        broker_connection.update_wind_sensor(wind["id"], dateObserved=datetime.utcnow(), windDirection=wind_direction, windSpeed=wind_speed)
+
 
 if __name__ == "__main__":
     random.seed(0)
@@ -148,3 +174,4 @@ if __name__ == "__main__":
     generate_wind_sensors(cb, wind_coordinates)
 
     steady_state_tree_values(cb, co2_stats, humidity_stats, temperature_stats, 1)
+    steady_state_wind_values(cb, wind_direction_stats, wind_speed_stats, 1)
