@@ -94,13 +94,6 @@ def generate_tree_sensors(
     for i, location in enumerate(coords):
         try:
             broker_connection.create_tree_sensor(f"tree_sensor_{i}", location, str(uuid4()))
-            broker_connection.update_tree_sensor(
-                f"tree_sensor_{i}",
-                datetime.utcnow(),
-                co2=i*2+1,
-                humidity=i*3+2,
-                temperature=i*5+3,
-            )
         except Exception as e:
             print(e)
 
@@ -112,12 +105,6 @@ def generate_wind_sensors(
     for i, location in enumerate(wind_coordinates):
         try:
             broker_connection.create_wind_sensor(f"wind_sensor_{i}", location, str(uuid4()))
-            broker_connection.update_wind_sensor(
-                f"wind_sensor_{i}",
-                datetime.utcnow(),
-                windDirection=(i*5+1)%360,
-                windSpeed=i*3+2,
-            )
         except Exception as e:
             print(e)
 
