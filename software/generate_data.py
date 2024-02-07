@@ -31,31 +31,34 @@ wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.29677, 21.96190)
 ]]
 
-co2_stats = {
-    "mean": 380,
-    "deviation": 20,
+steady_state_tree_stats = {
+    "co2": {
+        "mean": 380,
+        "deviation": 20,
+    },
+    "humidity": {
+        "mean": 50,
+        "deviation": 10,
+    },
+    "temperature": {
+        "mean": 20,
+        "deviation": 5,
+    }
 }
 
-humidity_stats = {
-    "mean": 50,
-    "deviation": 10,
+steady_state_wind_stats = {
+    "wind_direction": {
+        "mean": 15,
+        "deviation": 2,
+    },
+    "wind_speed": {
+        "mean": 15,
+        "deviation": 2,
+    }
 }
 
-temperature_stats = {
-    "mean": 20,
-    "deviation": 5,
-}
 
-wind_direction_stats = {
-    "mean": 15,
-    "deviation": 2,
-}
-
-wind_speed_stats = {
-    "mean": 15,
-    "deviation": 2,
-}
-
+#### GENERATE DEVICES ####
 def gen_points_in_polygon(
     polygon:Polygon,
     num_of_points:int
@@ -108,74 +111,119 @@ def generate_wind_sensors(
         except Exception as e:
             print(e)
 
+
+#### GENERATE TREE VALUES ####
 async def steady_state_tree_values(
     broker_connection:ContextBroker,
+    tree_sensor:dict,
     co2_stats:dict,
     humidity_stats:dict,
     temperature_stats:dict,
+    seed:int = 1
+) -> None:
+
+    co2_noise = PerlinNoise(octaves=1, seed=2*seed)
+    humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
+    temperature_noise = PerlinNoise(octaves=1, seed=5*seed)
+
+    tree_location = tree_sensor["location"]["coordinates"]
+
+    tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
+    tree_co2 = float(f"{tree_co2:.2f}")
+
+    tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
+    tree_humidity = float(f"{tree_humidity:.2f}")
+
+    tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
+    tree_temp = float(f"{tree_temp:.2f}")
+
+    print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
+
+    broker_connection.update_tree_sensor(
+        tree_sensor["id"],
+        dateObserved=datetime.utcnow(),
+        co2=tree_co2,
+        humidity=tree_humidity,
+        temperature=tree_temp
+    )
+
+async def generate_tree_values(
+    broker_connection:ContextBroker,
+    steady_state_tree_stats:dict,
     update_cycles:int = 1
 ) -> None:
 
-    seed = 0
-    for _ in range(update_cycles):
-        seed += 1
+    for seed in range(0, update_cycles):
 
-        co2_noise = PerlinNoise(octaves=1, seed=2*seed)
-        humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
-        temperature_noise = PerlinNoise(octaves=1, seed=5*seed)
+        tree_sensors = broker_connection.get_tree_sensors()
+        random.shuffle(tree_sensors)
 
-        trees = broker_connection.get_tree_sensors()
-        random.shuffle(trees)
+        for tree_sensor in tree_sensors:
 
-        for tree in trees:
-            tree_location = tree["location"]["coordinates"]
+            await steady_state_tree_values(
+                broker_connection,
+                tree_sensor,
+                steady_state_tree_stats["co2"],
+                steady_state_tree_stats["humidity"],
+                steady_state_tree_stats["temperature"],
+                seed+1
+            )
 
-            tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
-            tree_co2 = float(f"{tree_co2:.2f}")
+            await asyncio.sleep(10/len(tree_sensors))
 
-            tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
-            tree_humidity = float(f"{tree_humidity:.2f}")
 
-            tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
-            tree_temp = float(f"{tree_temp:.2f}")
-
-            print(tree["id"], tree_co2, tree_humidity, tree_temp)
-
-            broker_connection.update_tree_sensor(tree["id"], dateObserved=datetime.utcnow(), co2=tree_co2, humidity=tree_humidity, temperature=tree_temp)
-
-            await asyncio.sleep(10/len(trees))
-
+#### GENERATE WIND VALUES ####
 async def steady_state_wind_values(
     broker_connection:ContextBroker,
+    wind_sensor:dict,
     wind_direction_stats:dict,
     wind_speed_stats:dict,
+    seed:int
+) -> None:
+
+    wind_direction_noise = PerlinNoise(octaves=1, seed=2*seed)
+    wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
+
+    wind_location = wind_sensor["location"]["coordinates"]
+
+    wind_direction = wind_direction_stats["mean"] + wind_direction_noise(wind_location) * wind_direction_stats["deviation"]
+    wind_direction = int(wind_direction)
+
+    wind_speed = wind_speed_stats["mean"] + wind_speed_noise(wind_location) * wind_speed_stats["deviation"]
+    wind_speed = float(f"{wind_speed:.2f}")
+
+    print(wind_sensor["id"], wind_direction, wind_speed)
+
+    broker_connection.update_wind_sensor(
+        wind_sensor["id"],
+        dateObserved=datetime.utcnow(),
+        windDirection=wind_direction,
+        windSpeed=wind_speed
+    )
+
+async def generate_wind_values(
+    broker_connection:ContextBroker,
+    steady_state_wind_stats:dict,
     update_cycles:int = 1
 ) -> None:
 
-    seed = 0
-    for _ in range(update_cycles):
-        seed += 1
-
-        wind_direction_noise = PerlinNoise(octaves=1, seed=2*seed)
-        wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
+    for seed in range(0, update_cycles):
 
         wind_sensors = broker_connection.get_wind_sensors()
         random.shuffle(wind_sensors)
 
-        for wind in wind_sensors:
-            wind_location = wind["location"]["coordinates"]
+        for wind_sensor in wind_sensors:
 
-            wind_direction = wind_direction_stats["mean"] + wind_direction_noise(wind_location) * wind_direction_stats["deviation"]
-            wind_direction = int(wind_direction)
-
-            wind_speed = wind_speed_stats["mean"] + wind_speed_noise(wind_location) * wind_speed_stats["deviation"]
-            wind_speed = float(f"{wind_speed:.2f}")
-
-            print(wind["id"], wind_direction, wind_speed)
-
-            broker_connection.update_wind_sensor(wind["id"], dateObserved=datetime.utcnow(), windDirection=wind_direction, windSpeed=wind_speed)
+            await steady_state_wind_values(
+                broker_connection,
+                wind_sensor,
+                steady_state_wind_stats["wind_direction"],
+                steady_state_wind_stats["wind_speed"],
+                seed+1
+            )
 
             await asyncio.sleep(10/len(wind_sensors))
+
 
 async def main():
     random.seed(0)
@@ -186,8 +234,8 @@ async def main():
     generate_wind_sensors(cb, wind_coordinates)
 
     async with asyncio.TaskGroup() as tg:
-        trees_task = tg.create_task(steady_state_tree_values(cb, co2_stats, humidity_stats, temperature_stats))
-        wind_task = tg.create_task(steady_state_wind_values(cb, wind_direction_stats, wind_speed_stats))
+        trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats))
+        wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats))
 
 if __name__ == "__main__":
     asyncio.run(main())
