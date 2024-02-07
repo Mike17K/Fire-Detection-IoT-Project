@@ -110,12 +110,9 @@ def generate_wind_sensors(
 
 def steady_state_tree_values(
     broker_connection:ContextBroker,
-    co2_mean:float,
-    co2_deviation:float,
-    humidity_mean:float,
-    humidity_deviation:float,
-    temperature_mean:float,
-    temperature_deviation:float,
+    co2_stats:dict,
+    humidity_stats:dict,
+    temperature_stats:dict,
     seed:int
 ) -> None:
 
@@ -129,16 +126,16 @@ def steady_state_tree_values(
     for tree in trees:
         tree_location = tree["location"]["coordinates"]
 
-        tree_co2 = co2_mean + co2_noise(tree_location) * co2_deviation
+        tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
         tree_co2 = float(f"{tree_co2:.2f}")
 
-        tree_humidity = humidity_mean + humidity_noise(tree_location) * humidity_deviation
+        tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
         tree_humidity = float(f"{tree_humidity:.2f}")
 
-        tree_temp = temperature_mean + temperature_noise(tree_location) * temperature_deviation
+        tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
         tree_temp = float(f"{tree_temp:.2f}")
 
-        broker_connection.update_tree_sensor(tree["id"], dateObserved=datetime.utcnow(), temperature=tree_temp)
+        broker_connection.update_tree_sensor(tree["id"], dateObserved=datetime.utcnow(), co2=tree_co2, humidity=tree_humidity, temperature=tree_temp)
 
 
 if __name__ == "__main__":
@@ -150,13 +147,4 @@ if __name__ == "__main__":
 
     generate_wind_sensors(cb, wind_coordinates)
 
-    steady_state_tree_values(
-        cb,
-        co2_stats["mean"],
-        co2_stats["deviation"],
-        humidity_stats["mean"],
-        humidity_stats["deviation"],
-        temperature_stats["mean"],
-        temperature_stats["deviation"],
-        1
-    )
+    steady_state_tree_values(cb, co2_stats, humidity_stats, temperature_stats, 1)
