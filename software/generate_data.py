@@ -5,6 +5,8 @@ import asyncio, random
 from shapely.geometry import Polygon, Point
 from shapely.prepared import prep
 
+from geopy import distance
+
 import numpy as np
 
 from perlin_noise import PerlinNoise
@@ -20,7 +22,7 @@ trees_polygon = [
     (38.28941,21.88135)
 ]
 
-trees_polygon = Polygon([coord[::-1] for coord in trees_polygon])
+trees_polygon = Polygon([coord[::-1] for coord in trees_polygon]) # lon lat
 
 wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.30063, 21.93641),
@@ -29,32 +31,49 @@ wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.27893, 21.92458),
     (38.31069, 21.93780),
     (38.29677, 21.96190)
-]]
+]] # lon lat
 
 steady_state_tree_stats = {
-    "co2": {
+    "co2": { # ppm
         "mean": 380,
         "deviation": 20,
     },
-    "humidity": {
+    "humidity": { # %RH
         "mean": 50,
         "deviation": 10,
     },
-    "temperature": {
+    "temperature": { # degrees C
         "mean": 20,
         "deviation": 5,
     }
 }
 
 steady_state_wind_stats = {
-    "wind_direction": {
-        "mean": 15,
+    "wind_direction": { # compass heading
+        "mean": 270,
         "deviation": 2,
     },
-    "wind_speed": {
-        "mean": 15,
-        "deviation": 2,
+    "wind_speed": { # m/s
+        "mean": 9,
+        "deviation": 1,
     }
+}
+
+fire_stats = {
+    "center": (38.30337,21.91896), # lat, lon
+    "radius": 845, # m
+    "co2": { # ppm
+        "mean": 1000,
+        "deviation": 80
+    },
+    "humidity": { # %RH
+        "mean": 5,
+        "deviation": 2
+    },
+    "temperature": { # degrees C
+        "mean": 80,
+        "deviation": 20
+    },
 }
 
 
@@ -147,27 +166,78 @@ async def steady_state_tree_values(
         temperature=tree_temp
     )
 
+async def fire_tree_values(
+    broker_connection:ContextBroker,
+    tree_sensor:dict,
+    co2_stats:dict,
+    humidity_stats:dict,
+    temperature_stats:dict,
+    seed:int
+) -> None:
+
+    co2_noise = PerlinNoise(octaves=1, seed=2*seed)
+    humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
+    temperature_noise = PerlinNoise(octaves=1, seed=5*seed)
+
+    tree_location = tree_sensor["location"]["coordinates"]
+
+    tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
+    tree_co2 = float(f"{tree_co2:.2f}")
+
+    tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
+    tree_humidity = float(f"{tree_humidity:.2f}")
+
+    tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
+    tree_temp = float(f"{tree_temp:.2f}")
+
+    print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
+
+    broker_connection.update_tree_sensor(
+        tree_sensor["id"],
+        dateObserved=datetime.utcnow(),
+        co2=tree_co2,
+        humidity=tree_humidity,
+        temperature=tree_temp
+    )
+
 async def generate_tree_values(
     broker_connection:ContextBroker,
     steady_state_tree_stats:dict,
+    fire_stats:dict,
     update_cycles:int = 1
 ) -> None:
 
     for seed in range(0, update_cycles):
 
+        fire_radius_noise = PerlinNoise(octaves=20, seed=2*seed)
+
         tree_sensors = broker_connection.get_tree_sensors()
         random.shuffle(tree_sensors)
 
         for tree_sensor in tree_sensors:
+            tree_sensor_location = tree_sensor["location"]["coordinates"][::-1]
 
-            await steady_state_tree_values(
-                broker_connection,
-                tree_sensor,
-                steady_state_tree_stats["co2"],
-                steady_state_tree_stats["humidity"],
-                steady_state_tree_stats["temperature"],
-                seed+1
-            )
+            distance_to_fire_center = distance.distance(fire_stats["center"], tree_sensor_location).m
+            distance_variation = fire_radius_noise(tree_sensor_location)
+
+            if distance_to_fire_center < fire_stats["radius"] * (1 + distance_variation/10):
+                await fire_tree_values(
+                    broker_connection,
+                    tree_sensor,
+                    fire_stats["co2"],
+                    fire_stats["humidity"],
+                    fire_stats["temperature"],
+                    seed
+                )
+            else:
+                await steady_state_tree_values(
+                    broker_connection,
+                    tree_sensor,
+                    steady_state_tree_stats["co2"],
+                    steady_state_tree_stats["humidity"],
+                    steady_state_tree_stats["temperature"],
+                    seed+1
+                )
 
             await asyncio.sleep(10/len(tree_sensors))
 
@@ -234,7 +304,7 @@ async def main():
     generate_wind_sensors(cb, wind_coordinates)
 
     async with asyncio.TaskGroup() as tg:
-        trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats))
+        trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats, fire_stats))
         wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats))
 
 if __name__ == "__main__":
