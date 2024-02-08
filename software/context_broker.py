@@ -1,6 +1,6 @@
 import requests
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from typing import Dict, Tuple, List, Any
 
@@ -111,7 +111,7 @@ class ContextBroker:
             "type": "FireForestStatus",
             "dateCreated": {
                 "type": "DateTime",
-                "value": datetime.utcnow().isoformat()
+                "value": datetime.now(timezone.utc).isoformat(timespec="milliseconds")
             },
             "fireDetected": {
                 "type": "Boolean",
@@ -167,7 +167,7 @@ class ContextBroker:
         payload = {
             "dateObserved": {
                 "type": "DateTime",
-                "value": dateObserved.isoformat()
+                "value": dateObserved.isoformat(timespec="milliseconds")
             },
             "value": {
                 "type": "Text",

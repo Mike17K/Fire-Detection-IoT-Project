@@ -132,7 +132,7 @@ def generate_wind_sensors(
 
 
 #### GENERATE TREE VALUES ####
-async def steady_state_tree_values(
+async def tree_sensor_values(
     broker_connection:ContextBroker,
     tree_sensor:dict,
     co2_stats:dict,
@@ -160,41 +160,7 @@ async def steady_state_tree_values(
 
     broker_connection.update_tree_sensor(
         tree_sensor["id"],
-        dateObserved=datetime.utcnow(),
-        co2=tree_co2,
-        humidity=tree_humidity,
-        temperature=tree_temp
-    )
-
-async def fire_tree_values(
-    broker_connection:ContextBroker,
-    tree_sensor:dict,
-    co2_stats:dict,
-    humidity_stats:dict,
-    temperature_stats:dict,
-    seed:int
-) -> None:
-
-    co2_noise = PerlinNoise(octaves=1, seed=2*seed)
-    humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
-    temperature_noise = PerlinNoise(octaves=1, seed=5*seed)
-
-    tree_location = tree_sensor["location"]["coordinates"]
-
-    tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
-    tree_co2 = float(f"{tree_co2:.2f}")
-
-    tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
-    tree_humidity = float(f"{tree_humidity:.2f}")
-
-    tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
-    tree_temp = float(f"{tree_temp:.2f}")
-
-    print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
-
-    broker_connection.update_tree_sensor(
-        tree_sensor["id"],
-        dateObserved=datetime.utcnow(),
+        dateObserved=datetime.now(timezone.utc),
         co2=tree_co2,
         humidity=tree_humidity,
         temperature=tree_temp
@@ -221,16 +187,16 @@ async def generate_tree_values(
             distance_variation = fire_radius_noise(tree_sensor_location)
 
             if distance_to_fire_center < fire_stats["radius"] * seed/update_cycles * (1 + distance_variation/10):
-                await fire_tree_values(
+                await tree_sensor_values(
                     broker_connection,
                     tree_sensor,
                     fire_stats["co2"],
                     fire_stats["humidity"],
                     fire_stats["temperature"],
-                    seed
+                    seed+1
                 )
             else:
-                await steady_state_tree_values(
+                await tree_sensor_values(
                     broker_connection,
                     tree_sensor,
                     steady_state_tree_stats["co2"],
@@ -243,7 +209,7 @@ async def generate_tree_values(
 
 
 #### GENERATE WIND VALUES ####
-async def steady_state_wind_values(
+async def wind_sensor_values(
     broker_connection:ContextBroker,
     wind_sensor:dict,
     wind_direction_stats:dict,
@@ -266,7 +232,7 @@ async def steady_state_wind_values(
 
     broker_connection.update_wind_sensor(
         wind_sensor["id"],
-        dateObserved=datetime.utcnow(),
+        dateObserved=datetime.now(timezone.utc),
         windDirection=wind_direction,
         windSpeed=wind_speed
     )
@@ -284,7 +250,7 @@ async def generate_wind_values(
 
         for wind_sensor in wind_sensors:
 
-            await steady_state_wind_values(
+            await wind_sensor_values(
                 broker_connection,
                 wind_sensor,
                 steady_state_wind_stats["wind_direction"],
