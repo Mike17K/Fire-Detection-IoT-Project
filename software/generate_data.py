@@ -61,7 +61,7 @@ steady_state_wind_stats = {
 
 fire_stats = {
     "center": (38.30337,21.91896), # lat, lon
-    "radius": 845, # m
+    "radius": 1246, # m
     "co2": { # ppm
         "mean": 1000,
         "deviation": 80
@@ -207,7 +207,7 @@ async def generate_tree_values(
     update_cycles:int = 1
 ) -> None:
 
-    for seed in range(0, update_cycles):
+    for seed in range(update_cycles):
 
         fire_radius_noise = PerlinNoise(octaves=20, seed=2*seed)
 
@@ -220,7 +220,7 @@ async def generate_tree_values(
             distance_to_fire_center = distance.distance(fire_stats["center"], tree_sensor_location).m
             distance_variation = fire_radius_noise(tree_sensor_location)
 
-            if distance_to_fire_center < fire_stats["radius"] * (1 + distance_variation/10):
+            if distance_to_fire_center < fire_stats["radius"] * seed/update_cycles * (1 + distance_variation/10):
                 await fire_tree_values(
                     broker_connection,
                     tree_sensor,
@@ -277,7 +277,7 @@ async def generate_wind_values(
     update_cycles:int = 1
 ) -> None:
 
-    for seed in range(0, update_cycles):
+    for seed in range(update_cycles):
 
         wind_sensors = broker_connection.get_wind_sensors()
         random.shuffle(wind_sensors)
@@ -303,9 +303,11 @@ async def main():
     generate_tree_sensors(cb, trees_polygon, 150)
     generate_wind_sensors(cb, wind_coordinates)
 
+    update_cycles = 10
+
     async with asyncio.TaskGroup() as tg:
-        trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats, fire_stats))
-        wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats))
+        trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats, fire_stats, update_cycles))
+        wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats, update_cycles))
 
 if __name__ == "__main__":
     asyncio.run(main())
