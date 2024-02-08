@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile_inline: |
         FROM python:alpine
-        WORKDIR /mqtt_client
+        WORKDIR /generate_data
         COPY data_requirements.txt .
         RUN pip install -r data_requirements.txt
         COPY *.py ./
