@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:alpine
+        FROM python:latest
         WORKDIR /public_api
         COPY public_api_requirements.txt .
         RUN pip install -r public_api_requirements.txt
@@ -23,7 +23,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:alpine
+        FROM python:latest
         WORKDIR /mqtt_client
         COPY mqtt_requirements.txt .
         RUN pip install -r mqtt_requirements.txt
@@ -38,7 +38,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:alpine
+        FROM python:latest
         WORKDIR /generate_data
         COPY data_requirements.txt .
         RUN pip install -r data_requirements.txt
