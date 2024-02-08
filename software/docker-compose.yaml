@@ -7,7 +7,7 @@ services:
       dockerfile_inline: |
         FROM python:alpine
         WORKDIR /public_api
-        COPY requirements.txt .
+        COPY public_api_requirements.txt .
         RUN pip install -r public_api_requirements.txt
         COPY *.py ./
         EXPOSE 3000
@@ -25,7 +25,7 @@ services:
       dockerfile_inline: |
         FROM python:alpine
         WORKDIR /mqtt_client
-        COPY requirements.txt .
+        COPY mqtt_requirements.txt .
         RUN pip install -r mqtt_requirements.txt
         COPY *.py ./
         CMD ["python", "-u", "mqtt_client.py"]
@@ -40,7 +40,7 @@ services:
       dockerfile_inline: |
         FROM python:alpine
         WORKDIR /mqtt_client
-        COPY requirements.txt .
+        COPY data_requirements.txt .
         RUN pip install -r data_requirements.txt
         COPY *.py ./
         CMD ["python", "-u", "generate_data.py"]
