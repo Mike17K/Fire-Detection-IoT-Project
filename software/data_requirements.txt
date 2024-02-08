@@ -1,0 +1,4 @@
+requests
+shapely
+perlin_noise
+geopy

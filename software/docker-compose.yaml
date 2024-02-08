@@ -8,7 +8,7 @@ services:
         FROM python:alpine
         WORKDIR /public_api
         COPY requirements.txt .
-        RUN pip install -r requirements.txt
+        RUN pip install -r public_api_requirements.txt
         COPY *.py ./
         EXPOSE 3000
         CMD ["python", "public_api.py"]
@@ -26,9 +26,24 @@ services:
         FROM python:alpine
         WORKDIR /mqtt_client
         COPY requirements.txt .
-        RUN pip install -r requirements.txt
+        RUN pip install -r mqtt_requirements.txt
         COPY *.py ./
         CMD ["python", "-u", "mqtt_client.py"]
+
+    restart: unless-stopped
+    depends_on:
+      - orion
+
+  data_generation:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:alpine
+        WORKDIR /mqtt_client
+        COPY requirements.txt .
+        RUN pip install -r data_requirements.txt
+        COPY *.py ./
+        CMD ["python", "-u", "generate_data.py"]
 
     restart: unless-stopped
     depends_on:
@@ -48,4 +63,4 @@ services:
     restart: unless-stopped
     command: --nojournal
     volumes:
-      - ./data:/data/db
+      - /data/mongo/iot:/data/db
