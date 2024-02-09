@@ -25,10 +25,10 @@ trees_polygon = [
 trees_polygon = Polygon([coord[::-1] for coord in trees_polygon]) # lon lat
 
 wind_coordinates = [(coord[1], coord[0]) for coord in [
+    (38.27893, 21.92458),
     (38.30063, 21.93641),
     (38.31386, 21.87669),
     (38.30138, 21.90701),
-    (38.27893, 21.92458),
     (38.31069, 21.93780),
     (38.29677, 21.96190)
 ]] # lon lat
