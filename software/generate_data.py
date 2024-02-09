@@ -13,6 +13,8 @@ from perlin_noise import PerlinNoise
 
 from context_broker import ContextBroker
 
+
+#### DATA ####
 trees_polygon = [
     (38.27095,21.92257),
     (38.29897,21.98112),
@@ -77,6 +79,12 @@ fire_stats = {
 }
 
 
+#### UTILS ####
+def lerp(a, b, t):
+    assert(t>=0 and t<=1)
+    return a*(1-t) + b*t
+
+
 #### GENERATE DEVICES ####
 def gen_points_in_polygon(
     polygon:Polygon,
@@ -132,14 +140,13 @@ def generate_wind_sensors(
 
 
 #### GENERATE TREE VALUES ####
-async def tree_sensor_values(
-    broker_connection:ContextBroker,
+def tree_sensor_values(
     tree_sensor:dict,
     co2_stats:dict,
     humidity_stats:dict,
     temperature_stats:dict,
     seed:int = 1
-) -> None:
+) -> tuple:
 
     co2_noise = PerlinNoise(octaves=1, seed=2*seed)
     humidity_noise = PerlinNoise(octaves=1, seed=3*seed)
@@ -158,13 +165,7 @@ async def tree_sensor_values(
 
     print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
 
-    broker_connection.update_tree_sensor(
-        tree_sensor["id"],
-        dateObserved=datetime.now(timezone.utc),
-        co2=tree_co2,
-        humidity=tree_humidity,
-        temperature=tree_temp
-    )
+    return (tree_co2, tree_humidity, tree_temp)
 
 async def generate_tree_values(
     broker_connection:ContextBroker,
@@ -186,36 +187,62 @@ async def generate_tree_values(
             distance_to_fire_center = distance.distance(fire_stats["center"], tree_sensor_location).m
             distance_variation = fire_radius_noise(tree_sensor_location)
 
-            if distance_to_fire_center < fire_stats["radius"] * seed/update_cycles * (1 + distance_variation/10):
-                await tree_sensor_values(
-                    broker_connection,
-                    tree_sensor,
-                    fire_stats["co2"],
-                    fire_stats["humidity"],
-                    fire_stats["temperature"],
-                    seed+1
-                )
-            else:
-                await tree_sensor_values(
-                    broker_connection,
-                    tree_sensor,
-                    steady_state_tree_stats["co2"],
-                    steady_state_tree_stats["humidity"],
-                    steady_state_tree_stats["temperature"],
-                    seed+1
-                )
+            fire_values = tree_sensor_values(
+                tree_sensor,
+                fire_stats["co2"],
+                fire_stats["humidity"],
+                fire_stats["temperature"],
+                seed+1
+            )
 
+            steady_state_values = tree_sensor_values(
+                tree_sensor,
+                steady_state_tree_stats["co2"],
+                steady_state_tree_stats["humidity"],
+                steady_state_tree_stats["temperature"],
+                seed+1
+            )
+
+            # Start simulation without fire
+            if seed < update_cycles//3:
+                fire_radius = 0
+            # Increase fire radius in second part of simulation
+            elif seed < 2*update_cycles//3:
+                fire_radius = fire_stats["radius"] * seed/update_cycles
+            # Fire stops growing in final part of simulation
+            else:
+                fire_radius = fire_stats["radius"]
+
+            if distance_to_fire_center < fire_radius * (1 + distance_variation/10):
+                tree_co2 = fire_values[0]
+                tree_humidity = fire_values[1]
+                tree_temp = fire_values[2]
+            else:
+                t = fire_radius/(distance_to_fire_center*2)
+
+                tree_co2 = lerp(steady_state_values[0], fire_values[0], t)
+                tree_humidity = lerp(steady_state_values[1], fire_values[1], t)
+                tree_temp = lerp(steady_state_values[2], fire_values[2], t)
+
+            broker_connection.update_tree_sensor(
+                tree_sensor["id"],
+                dateObserved=datetime.now(timezone.utc),
+                co2=tree_co2,
+                humidity=tree_humidity,
+                temperature=tree_temp
+            )
+
+            # Wait so that updating all sensors takes ~10 secs
             await asyncio.sleep(10/len(tree_sensors))
 
 
 #### GENERATE WIND VALUES ####
-async def wind_sensor_values(
-    broker_connection:ContextBroker,
+def wind_sensor_values(
     wind_sensor:dict,
     wind_direction_stats:dict,
     wind_speed_stats:dict,
     seed:int
-) -> None:
+) -> tuple:
 
     wind_direction_noise = PerlinNoise(octaves=1, seed=2*seed)
     wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
@@ -230,12 +257,8 @@ async def wind_sensor_values(
 
     print(wind_sensor["id"], wind_direction, wind_speed)
 
-    broker_connection.update_wind_sensor(
-        wind_sensor["id"],
-        dateObserved=datetime.now(timezone.utc),
-        windDirection=wind_direction,
-        windSpeed=wind_speed
-    )
+    return (wind_direction, wind_speed)
+
 
 async def generate_wind_values(
     broker_connection:ContextBroker,
@@ -250,14 +273,24 @@ async def generate_wind_values(
 
         for wind_sensor in wind_sensors:
 
-            await wind_sensor_values(
-                broker_connection,
+            steady_state_values = wind_sensor_values(
                 wind_sensor,
                 steady_state_wind_stats["wind_direction"],
                 steady_state_wind_stats["wind_speed"],
                 seed+1
             )
 
+            wind_direction = steady_state_values[0]
+            wind_speed = steady_state_values[1]
+
+            broker_connection.update_wind_sensor(
+                wind_sensor["id"],
+                dateObserved=datetime.now(timezone.utc),
+                windDirection=wind_direction,
+                windSpeed=wind_speed
+            )
+
+            # Wait so that updating all sensors takes ~10 secs
             await asyncio.sleep(10/len(wind_sensors))
 
 
@@ -269,7 +302,7 @@ async def main():
     generate_tree_sensors(cb, trees_polygon, 150)
     generate_wind_sensors(cb, wind_coordinates)
 
-    update_cycles = 10
+    update_cycles = 30
 
     async with asyncio.TaskGroup() as tg:
         trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats, fire_stats, update_cycles))
