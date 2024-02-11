@@ -45,4 +45,6 @@ def predict(data: np.ndarray) -> np.ndarray:
   
   data = normalizeSensorData(data)
   predictions = autoencoder.call(data)
-  return np.max(np.abs(predictions - data), axis=1)
+  estimation = ( np.max(np.abs(predictions - data), axis=1) - 0.5273888 ) / (0.52770746 - 0.5273888)
+  estimation_propability = np.exp(5*(estimation-0.5)) / (1 + np.exp(5*(estimation-0.5)))
+  return estimation_propability

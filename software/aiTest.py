@@ -29,7 +29,7 @@ def preprocess_data(data):
 
 import pandas as pd
 import numpy as np
-anomalus_data_stored = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\ai\\data\\anomalus_data_from_api.csv", header=None).astype(np.float32)
+anomalus_data_stored = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\ai\\data\\test_data_from_api.csv", header=None).astype(np.float32)
 
 # Test 1: ( Normal Data: 450 values )
 sensor_data = np.array([
@@ -38,4 +38,4 @@ sensor_data = np.array([
     *anomalus_data_stored.values
 ])
 
-print((predict(sensor_data) - 0.5274) * 1000 > 0)
+print(predict(sensor_data)) # returns the probability of fire
