@@ -1,1 +1,1 @@
-from .predict_module import *
+__all__ = ['model', 'predict']
