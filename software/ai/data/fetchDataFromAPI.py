@@ -1,9 +1,9 @@
 import requests
 import numpy as np
 
-N = 10
+N = 100
 min_val = [0,0,0] # temp, hum, co2
-max_val = [1000,100,800] # temp, hum, co2
+max_val = [100,100,800] # temp, hum, co2
 
 data = []
 for i in range(N):
@@ -22,5 +22,6 @@ for i in range(N):
 
 # Path: software/ai/data/produceData.py
 filepath = "\\".join(__file__.split("\\")[:-1])+f"\\normal_data_from_api.csv"
+# filepath = "\\".join(__file__.split("\\")[:-1])+f"\\anomalus_data_from_api.csv"
 # write data to file
 np.savetxt(filepath, data, delimiter=",")

@@ -28,7 +28,7 @@ def smooth_random_changes_2d(shape, smoothness):
 SAMPLES_SIZE = 1000
 NUMBER_OF_SENSORS = 150
 min_val = [0,0,0] # temp, hum, co2
-max_val = [1000,100,800] # temp, hum, co2
+max_val = [100,100,800] # temp, hum, co2
 
 # Create Normal Dataset Dummy
 temperatures_normal = 20+10*smooth_random_changes_2d((SAMPLES_SIZE, NUMBER_OF_SENSORS), 0.1) + 2*np.random.rand(SAMPLES_SIZE, NUMBER_OF_SENSORS)

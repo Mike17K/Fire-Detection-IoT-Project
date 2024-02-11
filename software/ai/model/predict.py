@@ -28,7 +28,7 @@ def normalizeSensorData(data: np.ndarray):
   assert data.shape[1] == 450, "Data should have 450 columns"
 
   min_val = [0,0,0] # temp, hum, co2
-  max_val = [1000,100,800] # temp, hum, co2
+  max_val = [100,100,800] # temp, hum, co2
   for i in range(data.shape[1]):
       data[:,i] = (data[:,i] - min_val[(i)%3]) / (max_val[(i)%3] - min_val[(i)%3])
   return data
@@ -45,4 +45,4 @@ def predict(data: np.ndarray) -> np.ndarray:
   
   data = normalizeSensorData(data)
   predictions = autoencoder.call(data)
-  return np.sum(np.abs(predictions - data), axis=1)
+  return np.max(np.abs(predictions - data), axis=1)

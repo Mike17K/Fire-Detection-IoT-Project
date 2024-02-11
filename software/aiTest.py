@@ -19,7 +19,7 @@ api_normal_data = [{"dateObserved":"2024-02-11T09:32:43.724000Z","id":"tree_sens
 def preprocess_data(data):
   tmp_data = []
   min_val = [0,0,0] # temp, hum, co2
-  max_val = [1000,100,800] # temp, hum, co2
+  max_val = [100,100,800] # temp, hum, co2
   for sensorData in api_anomalus_data:
       temp_normalized = (sensorData['temperature'] - min_val[0]) / (max_val[0] - min_val[0])
       hum_normalized = (sensorData['humidity'] - min_val[1]) / (max_val[1] - min_val[1])
@@ -35,7 +35,7 @@ anomalus_data_stored = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\ai\\
 sensor_data = np.array([
     preprocess_data(api_anomalus_data),
     preprocess_data(api_normal_data),
-    anomalus_data_stored.values[0]
+    *anomalus_data_stored.values
 ])
 
-print(predict(sensor_data))
+print((predict(sensor_data) - 0.5274) * 1000 > 0)
