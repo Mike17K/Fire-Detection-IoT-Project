@@ -20,11 +20,11 @@ def preprocess_data(data):
   tmp_data = []
   min_val = [0,0,0] # temp, hum, co2
   max_val = [100,100,800] # temp, hum, co2
-  for sensorData in api_anomalus_data:
-      temp_normalized = (sensorData['temperature'] - min_val[0]) / (max_val[0] - min_val[0])
-      hum_normalized = (sensorData['humidity'] - min_val[1]) / (max_val[1] - min_val[1])
-      co2_normalized = (sensorData['co2'] - min_val[2]) / (max_val[2] - min_val[2])
-      tmp_data += [temp_normalized, hum_normalized, co2_normalized]
+  for d in data:
+      temp_data = (d['temperature'] - min_val[0]) / (max_val[0] - min_val[0])
+      hum_data = (d['humidity'] - min_val[1]) / (max_val[1] - min_val[1])
+      co2_data = (d['co2'] - min_val[2]) / (max_val[2] - min_val[2])
+      tmp_data += [temp_data, hum_data, co2_data]
   return tmp_data
 
 import pandas as pd
@@ -35,6 +35,7 @@ anomalus_data_stored = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\ai\\
 sensor_data = np.array([
     preprocess_data(api_anomalus_data),
     preprocess_data(api_normal_data),
+    
     *anomalus_data_stored.values
 ])
 
