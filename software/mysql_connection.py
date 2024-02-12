@@ -12,13 +12,17 @@ class DBConnection:
 
   def _get_controlled_property(self, entity_id) -> list:
 
-    query = f"SELECT attrValue FROM {entity_id}_Device WHERE attrName = 'controlledProperty'"
+    query = (
+      "SELECT attrValue "
+      f"FROM {entity_id}_Device "
+      "WHERE attrName = 'controlledProperty' "
+      "LIMIT 1"
+    )
 
     cursor = self.cnx.cursor()
     cursor.execute(query)
 
     row = cursor.fetchone()
-    cursor.reset()
     cursor.close()
 
     if row is not None:
@@ -28,7 +32,12 @@ class DBConnection:
 
   def _get_values(self, entity_id) -> list:
 
-    query = f"SELECT attrValue FROM {entity_id}_Device WHERE attrName='value'"
+    query = (
+      "SELECT attrValue "
+      f"FROM {entity_id}_Device "
+      "WHERE attrName = 'value' "
+      "AND recvTime >= NOW() - INTERVAL 1 DAY "
+    )
 
     cursor = self.cnx.cursor()
     cursor.execute(query)
