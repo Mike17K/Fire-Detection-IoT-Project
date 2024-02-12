@@ -84,6 +84,29 @@ def lerp(a, b, t):
     assert(t>=0 and t<=1)
     return a*(1-t) + b*t
 
+def distance_to_fire(fire_stats, entity_location):
+    a = fire_stats["center"][::-1]
+    b = entity_location[::-1]
+    d = distance.distance(a, b).m
+    print(a, b, d)
+    return d
+
+def calculate_fire_radius(entity_location, fire_stats, seed, update_cycles):
+    fire_radius_noise = PerlinNoise(octaves=20, seed=2*seed)
+    distance_variation = fire_radius_noise(entity_location)
+
+    # Start simulation without fire
+    if seed < update_cycles//3:
+        fire_radius = 0
+    # Increase fire radius in second part of simulation
+    elif seed < 2*update_cycles//3:
+        fire_radius = fire_stats["radius"] * seed/update_cycles
+    # Fire stops growing in final part of simulation
+    else:
+        fire_radius = fire_stats["radius"]
+
+    return fire_radius * (1 + distance_variation/10)
+
 
 #### GENERATE DEVICES ####
 def gen_points_in_polygon(
@@ -173,17 +196,13 @@ async def generate_tree_values(
 ) -> None:
 
     for seed in range(update_cycles):
-
-        fire_radius_noise = PerlinNoise(octaves=20, seed=2*seed)
-
         tree_sensors = broker_connection.get_tree_sensors()
         random.shuffle(tree_sensors)
 
         for tree_sensor in tree_sensors:
-            tree_sensor_location = tree_sensor["location"]["coordinates"][::-1]
+            tree_sensor_location = tree_sensor["location"]["coordinates"]
 
-            distance_to_fire_center = distance.distance(fire_stats["center"], tree_sensor_location).m
-            distance_variation = fire_radius_noise(tree_sensor_location)
+            distance_to_fire_center = distance_to_fire(fire_stats, tree_sensor_location)
 
             fire_values = tree_sensor_values(
                 tree_sensor,
@@ -201,17 +220,9 @@ async def generate_tree_values(
                 seed+1
             )
 
-            # Start simulation without fire
-            if seed < update_cycles//3:
-                fire_radius = 0
-            # Increase fire radius in second part of simulation
-            elif seed < 2*update_cycles//3:
-                fire_radius = fire_stats["radius"] * seed/update_cycles
-            # Fire stops growing in final part of simulation
-            else:
-                fire_radius = fire_stats["radius"]
+            fire_radius = calculate_fire_radius(tree_sensor_location, fire_stats, seed, update_cycles)
 
-            if distance_to_fire_center < fire_radius * (1 + distance_variation/10):
+            if distance_to_fire_center < fire_radius:
                 tree_co2 = fire_values[0]
                 tree_humidity = fire_values[1]
                 tree_temp = fire_values[2]
