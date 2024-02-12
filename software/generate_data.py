@@ -194,13 +194,8 @@ def tree_sensor_values(
     tree_location = tree_sensor["location"]["coordinates"]
 
     tree_co2 = co2_stats["mean"] + co2_noise(tree_location) * co2_stats["deviation"]
-    tree_co2 = float(f"{tree_co2:.2f}")
-
     tree_humidity = humidity_stats["mean"] + humidity_noise(tree_location) * humidity_stats["deviation"]
-    tree_humidity = float(f"{tree_humidity:.2f}")
-
     tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
-    tree_temp = float(f"{tree_temp:.2f}")
 
     return (tree_co2, tree_humidity, tree_temp)
 
@@ -249,6 +244,11 @@ async def generate_tree_values(
                 tree_humidity = lerp(steady_state_values[1], fire_values[1], t)
                 tree_temp = lerp(steady_state_values[2], fire_values[2], t)
 
+            # Trim data to 2 decimal points
+            tree_co2 = float(f"{tree_co2:.2f}")
+            tree_humidity = float(f"{tree_humidity:.2f}")
+            tree_temp = float(f"{tree_temp:.2f}")
+
             print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
 
             broker_connection.update_tree_sensor(
@@ -277,10 +277,7 @@ def wind_sensor_values(
     wind_location = wind_sensor["location"]["coordinates"]
 
     wind_direction = wind_direction_stats["mean"] + wind_direction_noise(wind_location) * wind_direction_stats["deviation"]
-    wind_direction = int(wind_direction)
-
     wind_speed = wind_speed_stats["mean"] + wind_speed_noise(wind_location) * wind_speed_stats["deviation"]
-    wind_speed = float(f"{wind_speed:.2f}")
 
     return (wind_direction, wind_speed)
 
@@ -300,7 +297,6 @@ def fire_wind_values(
     fire_wind_direction = fire_wind_direction + wind_direction_noise(wind_sensor_location) * fire_stats["wind_direction"]["deviation"]
     if fire_wind_direction < 0:
         fire_wind_direction += 360
-    fire_wind_direction = float(f"{fire_wind_direction:.2f}")
 
     fire_wind_speed = fire_stats["wind_speed"]["mean"] + wind_speed_noise(wind_sensor_location) * fire_stats["wind_speed"]["deviation"]
 
@@ -353,6 +349,8 @@ async def generate_wind_values(
             # Calculate final direction and speed
             wind_speed, wind_direction = cartesian_to_polar(wind_vector[0], wind_vector[1])
             wind_direction = np.rad2deg(wind_direction)
+
+            # Trim data to 2 decimal points
             wind_speed = float(f"{wind_speed:.2f}")
             wind_direction = float(f"{wind_direction:.2f}")
 
