@@ -6,9 +6,14 @@ from datetime import datetime
 from typing import Tuple, Dict, List
 
 from context_broker import ContextBroker
+from mysql_connection import DBConnection
+
+lab_ip = "150.140.186.118"
+local_ip = "192.168.1.2"
 
 app = FastAPI()
-cb = ContextBroker("192.168.1.2")
+cb = ContextBroker(local_ip)
+db = DBConnection(lab_ip)
 
 origins = [
     "http://localhost:3000",
@@ -224,6 +229,10 @@ async def get_wind_values() -> List[Wind]:
         wind.append(Wind.fromDict(transform_device(wind_sensor)))
 
     return wind
+
+@app.get("/history/{entity_id}")
+async def get_history(entity_id) -> List[Dict]:
+    return db.get_history(entity_id)
 
 import uvicorn, sys, os
 
