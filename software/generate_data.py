@@ -104,7 +104,6 @@ def distance_to_fire(fire_stats, entity_location):
     a = fire_stats["center"][::-1]
     b = entity_location[::-1]
     d = distance.distance(a, b).m
-    print(a, b, d)
     return d
 
 def calculate_fire_radius(entity_location, fire_stats, seed, update_cycles):
@@ -291,12 +290,13 @@ def fire_wind_values(
     wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
 
     fire_wind_vector = np.array(fire_stats["center"]) - np.array(wind_sensor_location)
-
     _, fire_wind_direction = cartesian_to_polar(fire_wind_vector[0], fire_wind_vector[1])
+
     fire_wind_direction = np.rad2deg(fire_wind_direction)
-    fire_wind_direction = fire_wind_direction + wind_direction_noise(wind_sensor_location) * fire_stats["wind_direction"]["deviation"]
-    if fire_wind_direction < 0:
-        fire_wind_direction += 360
+    fire_wind_direction += wind_direction_noise(wind_sensor_location) * fire_stats["wind_direction"]["deviation"]
+
+    # Transform direction to compass heading
+    fire_wind_direction = (470 - fire_wind_direction) % 360
 
     fire_wind_speed = fire_stats["wind_speed"]["mean"] + wind_speed_noise(wind_sensor_location) * fire_stats["wind_speed"]["deviation"]
 
