@@ -6,3 +6,4 @@ shapely
 perlin_noise
 tensorflow
 geopy
+mysql-connector-python
