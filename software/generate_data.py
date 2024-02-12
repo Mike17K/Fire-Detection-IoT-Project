@@ -62,7 +62,7 @@ steady_state_wind_stats = {
 }
 
 fire_stats = {
-    "center": (38.30337,21.91896), # lat, lon
+    "center": (38.30337,21.91896)[::-1], # lon, lat
     "radius": 1246, # m
     "co2": { # ppm
         "mean": 1000,
@@ -76,6 +76,13 @@ fire_stats = {
         "mean": 80,
         "deviation": 20
     },
+    "wind_direction": {
+        "deviation": 2
+    },
+    "wind_speed": {
+        "mean": 12,
+        "deviation": 5
+    }
 }
 
 
@@ -83,6 +90,15 @@ fire_stats = {
 def lerp(a, b, t):
     assert(t>=0 and t<=1)
     return a*(1-t) + b*t
+
+def polar_to_cartesian(r, theta):
+    return (r * np.cos(theta), r * np.sin(theta))
+
+def cartesian_to_polar(x, y):
+    angle = np.arctan2(y,x)
+    if angle < 0:
+        angle += 2 * np.pi
+    return (np.sqrt(x**2 + y**2), angle)
 
 def distance_to_fire(fire_stats, entity_location):
     a = fire_stats["center"][::-1]
@@ -268,10 +284,32 @@ def wind_sensor_values(
 
     return (wind_direction, wind_speed)
 
+def fire_wind_values(
+    wind_sensor_location:dict,
+    fire_stats:dict,
+    seed:int,
+) -> tuple:
+
+    wind_direction_noise = PerlinNoise(octaves=1, seed=2*seed)
+    wind_speed_noise = PerlinNoise(octaves=1, seed=3*seed)
+
+    fire_wind_vector = np.array(fire_stats["center"]) - np.array(wind_sensor_location)
+
+    _, fire_wind_direction = cartesian_to_polar(fire_wind_vector[0], fire_wind_vector[1])
+    fire_wind_direction = np.rad2deg(fire_wind_direction)
+    fire_wind_direction = fire_wind_direction + wind_direction_noise(wind_sensor_location) * fire_stats["wind_direction"]["deviation"]
+    if fire_wind_direction < 0:
+        fire_wind_direction += 360
+    fire_wind_direction = float(f"{fire_wind_direction:.2f}")
+
+    fire_wind_speed = fire_stats["wind_speed"]["mean"] + wind_speed_noise(wind_sensor_location) * fire_stats["wind_speed"]["deviation"]
+
+    return (fire_wind_direction, fire_wind_speed)
 
 async def generate_wind_values(
     broker_connection:ContextBroker,
     steady_state_wind_stats:dict,
+    fire_stats:dict,
     update_cycles:int = 1
 ) -> None:
 
@@ -281,6 +319,7 @@ async def generate_wind_values(
         random.shuffle(wind_sensors)
 
         for wind_sensor in wind_sensors:
+            wind_sensor_location = wind_sensor["location"]["coordinates"]
 
             steady_state_values = wind_sensor_values(
                 wind_sensor,
@@ -289,8 +328,35 @@ async def generate_wind_values(
                 seed+1
             )
 
-            wind_direction = steady_state_values[0]
+            fire_values = fire_wind_values(
+                wind_sensor_location,
+                fire_stats,
+                seed+1
+            )
+
+            # Calculate steady state wind vector
+            wind_direction = np.deg2rad(steady_state_values[0])
             wind_speed = steady_state_values[1]
+            wind_vector = np.array(polar_to_cartesian(wind_speed, wind_direction))
+
+            # Calculate fire wind vector
+            fire_wind_direction = np.deg2rad(fire_values[0])
+            fire_wind_speed = fire_values[1]
+            fire_wind_vector = np.array(polar_to_cartesian(fire_wind_speed, fire_wind_direction))
+
+            # Interpolate between steady state and fire vectors based on the distance from the fire
+            fire_radius = calculate_fire_radius(wind_sensor_location, fire_stats, seed, update_cycles)
+            distance_to_fire_center = distance_to_fire(fire_stats, wind_sensor_location)
+            t = fire_radius/(distance_to_fire_center*2)
+            wind_vector = lerp(wind_vector, fire_wind_vector, t)
+
+            # Calculate final direction and speed
+            wind_speed, wind_direction = cartesian_to_polar(wind_vector[0], wind_vector[1])
+            wind_direction = np.rad2deg(wind_direction)
+            wind_speed = float(f"{wind_speed:.2f}")
+            wind_direction = float(f"{wind_direction:.2f}")
+
+            print(wind_sensor["id"], wind_direction, wind_speed)
 
             broker_connection.update_wind_sensor(
                 wind_sensor["id"],
@@ -315,7 +381,7 @@ async def main():
 
     async with asyncio.TaskGroup() as tg:
         trees_task = tg.create_task(generate_tree_values(cb, steady_state_tree_stats, fire_stats, update_cycles))
-        wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats, update_cycles))
+        wind_task = tg.create_task(generate_wind_values(cb, steady_state_wind_stats, fire_stats, update_cycles))
 
 if __name__ == "__main__":
     asyncio.run(main())
