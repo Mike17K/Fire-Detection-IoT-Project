@@ -163,8 +163,6 @@ def tree_sensor_values(
     tree_temp = temperature_stats["mean"] + temperature_noise(tree_location) * temperature_stats["deviation"]
     tree_temp = float(f"{tree_temp:.2f}")
 
-    print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
-
     return (tree_co2, tree_humidity, tree_temp)
 
 async def generate_tree_values(
@@ -224,6 +222,8 @@ async def generate_tree_values(
                 tree_humidity = lerp(steady_state_values[1], fire_values[1], t)
                 tree_temp = lerp(steady_state_values[2], fire_values[2], t)
 
+            print(tree_sensor["id"], tree_co2, tree_humidity, tree_temp)
+
             broker_connection.update_tree_sensor(
                 tree_sensor["id"],
                 dateObserved=datetime.now(timezone.utc),
@@ -254,8 +254,6 @@ def wind_sensor_values(
 
     wind_speed = wind_speed_stats["mean"] + wind_speed_noise(wind_location) * wind_speed_stats["deviation"]
     wind_speed = float(f"{wind_speed:.2f}")
-
-    print(wind_sensor["id"], wind_direction, wind_speed)
 
     return (wind_direction, wind_speed)
 
