@@ -210,7 +210,7 @@ class ContextBroker:
         self,
         deviceId:str,
         dateObserved:datetime,
-        windDirection:int|None = None,
+        windDirection:float|None = None,
         windSpeed:float|None = None,
     ) -> None:
 
