@@ -44,6 +44,7 @@ class ContextBroker:
             "type": "Device",
             "dateObserved": {
                 "type": "DateTime",
+                "value": datetime.now(timezone.utc).isoformat(timespec="milliseconds")
             },
             "location": {
                 "type": "geo:json",
