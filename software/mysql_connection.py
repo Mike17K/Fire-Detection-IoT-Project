@@ -33,7 +33,7 @@ class DBConnection:
   def _get_values(self, entity_id) -> list:
 
     query = (
-      "SELECT attrValue "
+      "SELECT attrValue, recvTime "
       f"FROM {entity_id}_Device "
       "WHERE attrName = 'value' "
       "AND recvTime >= NOW() - INTERVAL 1 DAY "
@@ -43,23 +43,28 @@ class DBConnection:
     cursor.execute(query)
 
     values = []
+    times = []
     for row in cursor.fetchall():
       if "null" in row[0]: continue
       values.append(row[0])
+      times.append(row[1])
 
     cursor.close()
 
-    return values
+    return values, times
 
-  def _format_values(self, controlledProperties:list, raw_values:list) -> list[dict]:
+  def _format_values(self, controlledProperties:list, raw_values:list, times:list) -> list[dict]:
     data = []
 
-    for value in raw_values:
+    for i, value in enumerate(raw_values):
       values = value.split("&")
 
-      value_object = {}
-      for i, controlledProperty in enumerate(controlledProperties):
-        value_object[controlledProperty] = values[i]
+      value_object = {
+        "dateObserved": times[i]
+      }
+
+      for j, controlledProperty in enumerate(controlledProperties):
+        value_object[controlledProperty] = values[j]
 
       data.append(value_object)
 
@@ -67,9 +72,9 @@ class DBConnection:
 
   def get_history(self, entity_id) -> list[dict]:
     controlledProperties = self._get_controlled_property(entity_id)
-    raw_values = self._get_values(entity_id)
+    raw_values, times = self._get_values(entity_id)
 
-    formated_values = self._format_values(controlledProperties, raw_values)
+    formated_values = self._format_values(controlledProperties, raw_values, times)
 
     return formated_values
 
