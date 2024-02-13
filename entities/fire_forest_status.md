@@ -7,7 +7,7 @@ Global description: Entity describing the possible presence of a fire in a fores
 
 ## List of properties
 
-- 'dateCreated[date-time]': Date and time that the entity was created in ISO 8601 UTC format
+- 'dateObserved[date-time]': Date and time of observation in ISO 8601 UTC format
 - 'fireDetected[boolean]': Presence of a fire detected in the area
 - 'fireDetectedConfidence[number]': Confidence in the fire detection as a percentage from 0 to 1
 - 'fireRiskIndex[number]': Risk of fire index as a percentage from 0 to 1
@@ -19,7 +19,7 @@ Global description: Entity describing the possible presence of a fire in a fores
 
 Required properties
 
-- 'dateCreated'
+- 'dateObserved'
 - 'id'
 - 'location'
 - 'type'
