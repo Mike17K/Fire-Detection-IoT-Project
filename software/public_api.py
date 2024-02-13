@@ -110,6 +110,21 @@ class Temperature(BaseModel):
             temperature=data["temperature"],
         )
 
+class ForestStatus(BaseModel):
+    dateObserved: datetime
+    fireDetected: bool
+    fireDetectedConfidence: float
+    location: List[List[Tuple[float, float]]] | Tuple[float, float]
+
+    @staticmethod
+    def fromDict(data:Dict):
+        return ForestStatus(
+            dateObserved=data["dateObserved"],
+            fireDetected=data["fireDetected"],
+            fireDetectedConfidence=data["fireDetectedConfidence"],
+            location=data["location"]["coordinates"]
+        )
+
 
 #### UTILITY FUNCTIONS ####
 
@@ -128,7 +143,6 @@ def reverse_entity_location(entity:Dict) -> Dict:
         entity["location"]["coordinates"] = reversed_coords
 
     return entity
-
 
 def transform_device(entity:Dict) -> Dict:
     entity = reverse_entity_location(entity)
@@ -232,6 +246,12 @@ def get_wind_values() -> List[Wind]:
 def get_history(entity_id) -> List[Dict]:
     db = DBConnection(lab_host)
     return db.get_history(entity_id)
+
+@app.get("/forest_status")
+def get_forest_status() -> ForestStatus:
+    entity = cb.get_entity("forest_status_0")
+    entity = reverse_entity_location(entity)
+    return ForestStatus.fromDict(entity)
 
 if __name__ == "__main__":
     import uvicorn, sys, os
