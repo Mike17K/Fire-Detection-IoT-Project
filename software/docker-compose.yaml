@@ -49,21 +49,21 @@ services:
     # depends_on:
     #   - orion
 
-    detection_model:
-      build:
-        context: .
-        dockerfile_inline: |
-          FROM tensorflow/tensorflow:latest
-          WORKDIR /detection_model
-          COPY ai_requirements.txt .
-          RUN pip install -r ai_requirements.txt
-          COPY *.py ./
-          COPY ai ./ai
-          CMD ["python", "-u", "ai_connection.py"]
+  detection_model:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM tensorflow/tensorflow:latest
+        WORKDIR /detection_model
+        COPY ai_requirements.txt .
+        RUN pip install -r ai_requirements.txt
+        COPY *.py ./
+        COPY ai ./ai
+        CMD ["python", "-u", "ai_connection.py"]
 
-      restart: unless-stopped
-      # depends_on:
-      #   - orion
+    restart: unless-stopped
+    # depends_on:
+    #   - orion
 
   # orion:
   #   image: fiware/orion
