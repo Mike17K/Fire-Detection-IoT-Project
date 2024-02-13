@@ -8,11 +8,11 @@ from typing import Tuple, Dict, List
 from context_broker import ContextBroker
 from mysql_connection import DBConnection
 
-from common_data import lab_ip, local_ip
+from common_data import connection_ip
 
 app = FastAPI()
-cb = ContextBroker(lab_ip)
-db = DBConnection(lab_ip)
+cb = ContextBroker(connection_ip)
+db = DBConnection(connection_ip)
 
 origins = [
     "http://localhost:3000",

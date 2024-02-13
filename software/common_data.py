@@ -18,3 +18,5 @@ wind_coordinates = [(coord[1], coord[0]) for coord in [
 
 lab_ip = "150.140.186.118"
 local_ip = "172.0.0.1"
+
+connection_ip = lab_ip
