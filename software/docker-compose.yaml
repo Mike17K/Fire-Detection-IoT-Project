@@ -16,8 +16,8 @@ services:
     restart: unless-stopped
     ports:
       - 3000:3000
-    depends_on:
-      - orion
+    # depends_on:
+    #   - orion
 
   mqtt_client:
     build:
@@ -31,8 +31,8 @@ services:
         CMD ["python", "-u", "mqtt_client.py"]
 
     restart: unless-stopped
-    depends_on:
-      - orion
+    # depends_on:
+    #   - orion
 
   data_generation:
     build:
@@ -46,21 +46,37 @@ services:
         CMD ["python", "-u", "generate_data.py"]
 
     restart: unless-stopped
-    depends_on:
-      - orion
+    # depends_on:
+    #   - orion
 
-  orion:
-    image: fiware/orion
-    restart: unless-stopped
-    ports:
-      - 1026:1026
-    depends_on:
-      - mongo
-    command: -dbhost mongo
+    detection_model:
+      build:
+        context: .
+        dockerfile_inline: |
+          FROM tensorflow/tensorflow:latest
+          WORKDIR /detection_model
+          COPY ai_requirements.txt .
+          RUN pip install -r ai_requirements.txt
+          COPY *.py ./
+          COPY ai ./ai
+          CMD ["python", "-u", "ai_connection.py"]
 
-  mongo:
-    image: mongo:6.0
-    restart: unless-stopped
-    command: --nojournal
-    volumes:
-      - /data/mongo/iot:/data/db
+      restart: unless-stopped
+      # depends_on:
+      #   - orion
+
+  # orion:
+  #   image: fiware/orion
+  #   restart: unless-stopped
+  #   ports:
+  #     - 1026:1026
+  #   depends_on:
+  #     - mongo
+  #   command: -dbhost mongo
+
+  # mongo:
+  #   image: mongo:6.0
+  #   restart: unless-stopped
+  #   command: --nojournal
+  #   volumes:
+  #     - /data/mongo/iot:/data/db

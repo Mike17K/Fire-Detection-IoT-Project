@@ -1,0 +1,3 @@
+requests
+fastapi
+mysql-connector-python
