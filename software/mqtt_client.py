@@ -108,5 +108,6 @@ class MqttClient:
         )
 
 if __name__ == "__main__":
-    cb = ContextBroker("192.168.1.2")
-    client = MqttClient("150.140.186.118", 1883, cb)
+    lab_ip = "150.140.186.118"
+    cb = ContextBroker(lab_ip)
+    client = MqttClient(lab_ip, 1883, cb)
