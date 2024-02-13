@@ -12,7 +12,6 @@ from common_data import connection_ip
 
 app = FastAPI()
 cb = ContextBroker(connection_ip)
-db = DBConnection(connection_ip)
 
 origins = [
     "http://localhost:3000",
@@ -231,6 +230,7 @@ def get_wind_values() -> List[Wind]:
 
 @app.get("/history/{entity_id}")
 def get_history(entity_id) -> List[Dict]:
+    db = DBConnection(connection_ip)
     return db.get_history(entity_id)
 
 if __name__ == "__main__":
