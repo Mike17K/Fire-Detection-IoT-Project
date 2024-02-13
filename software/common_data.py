@@ -19,4 +19,4 @@ wind_coordinates = [(coord[1], coord[0]) for coord in [
 lab_host = "150.140.186.118"
 local_host = "orion"
 
-connection_host = lab_host
+connection_host = local_host

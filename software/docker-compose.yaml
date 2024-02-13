@@ -64,18 +64,16 @@ services:
     # depends_on:
     #   - orion
 
-  # orion:
-  #   image: fiware/orion:3.11.0
-  #   restart: unless-stopped
-  #   ports:
-  #     - 1026:1026
-  #   depends_on:
-  #     - mongo
-  #   command: -dbhost mongo
+  orion:
+    image: fiware/orion:3.11.0
+    restart: unless-stopped
+    ports:
+      - 1026:1026
+    depends_on:
+      - mongo
+    command: -dbhost mongo
 
-  # mongo:
-  #   image: mongo:6.0
-  #   restart: unless-stopped
-  #   command: --nojournal
-  #   volumes:
-  #     - /data/mongo/iot:/data/db
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    command: --nojournal
