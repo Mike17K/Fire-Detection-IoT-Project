@@ -6,8 +6,7 @@ class DBConnection:
       user="root",
       password="root_password",
       host=host,
-      database="default",
-      ssl_disabled=True
+      database="default"
     )
 
   def _get_controlled_property(self, entity_id:str) -> list:
