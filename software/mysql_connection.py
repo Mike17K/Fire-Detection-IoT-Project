@@ -1,7 +1,7 @@
 import mysql.connector
 
 class DBConnection:
-  def __init__(self, host):
+  def __init__(self, host:str):
     self.cnx = mysql.connector.connect(
       user="root",
       password="root_password",
@@ -10,7 +10,7 @@ class DBConnection:
       ssl_disabled=True
     )
 
-  def _get_controlled_property(self, entity_id) -> list:
+  def _get_controlled_property(self, entity_id:str) -> list:
 
     query = (
       "SELECT attrValue "
@@ -30,7 +30,7 @@ class DBConnection:
 
     return []
 
-  def _get_values(self, entity_id) -> list:
+  def _get_values(self, entity_id:str) -> list:
 
     query = (
       "SELECT attrValue, recvTime "
@@ -70,7 +70,7 @@ class DBConnection:
 
     return data
 
-  def get_history(self, entity_id) -> list[dict]:
+  def get_history(self, entity_id:str) -> list[dict]:
     controlledProperties = self._get_controlled_property(entity_id)
     raw_values, times = self._get_values(entity_id)
 
