@@ -433,7 +433,9 @@ class ContextBroker:
 
 
 if __name__ == "__main__":
-    context = ContextBroker("192.168.1.2")
+    from common_data import local_ip
+
+    context = ContextBroker(local_ip)
 
     context.subscribe_to_device_updates("http://192.168.1.5:3001")
 
