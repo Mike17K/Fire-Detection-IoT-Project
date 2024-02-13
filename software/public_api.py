@@ -182,34 +182,34 @@ def get_trees_attribute(attributeName:str) -> List[Dict]:
 #### ROUTES ####
 
 @app.get("/trees/{entity_id}")
-async def get_tree(entity_id) -> Tree:
+def get_tree(entity_id) -> Tree:
     entity = cb.get_entity(entity_id)
     return Tree.fromDict(transform_device(entity))
 
 @app.get("/wind/{entity_id}")
-async def get_wind(entity_id) -> Wind:
+def get_wind(entity_id) -> Wind:
     entity = cb.get_entity(entity_id)
     return Wind.fromDict(transform_device(entity))
 
 
 @app.get("/co2")
-async def get_co2() -> List[Co2]:
+def get_co2() -> List[Co2]:
     data = get_trees_attribute("co2")
     return list(map(Co2.fromDict, data))
 
 @app.get("/humidity")
-async def get_humidity() -> List[Humidity]:
+def get_humidity() -> List[Humidity]:
     data = get_trees_attribute("humidity")
     return list(map(Humidity.fromDict, data))
 
 @app.get("/temperature")
-async def get_temperature() -> List[Temperature]:
+def get_temperature() -> List[Temperature]:
     data = get_trees_attribute("temperature")
     return list(map(Temperature.fromDict, data))
 
 
 @app.get("/trees")
-async def get_tree_sensor_values() -> List[Tree]:
+def get_tree_sensor_values() -> List[Tree]:
     tree_sensors = cb.get_tree_sensors()
 
     trees = []
@@ -220,7 +220,7 @@ async def get_tree_sensor_values() -> List[Tree]:
     return trees
 
 @app.get("/wind")
-async def get_wind_values() -> List[Wind]:
+def get_wind_values() -> List[Wind]:
     wind_sensors = cb.get_wind_sensors()
 
     wind = []
@@ -231,7 +231,7 @@ async def get_wind_values() -> List[Wind]:
     return wind
 
 @app.get("/history/{entity_id}")
-async def get_history(entity_id) -> List[Dict]:
+def get_history(entity_id) -> List[Dict]:
     return db.get_history(entity_id)
 
 import uvicorn, sys, os
