@@ -4,9 +4,9 @@ import time
 
 from context_broker import ContextBroker
 from public_api import get_tree_sensor_values
-from generate_data import trees_polygon_coords
+from common_data import trees_polygon_coords, lab_ip, local_ip
 
-cb = ContextBroker("150.140.186.118")
+cb = ContextBroker(lab_ip)
 
 def preprocess_data(data:list[dict]) -> list:
   tmp_data = []

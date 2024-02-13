@@ -8,8 +8,7 @@ from typing import Tuple, Dict, List
 from context_broker import ContextBroker
 from mysql_connection import DBConnection
 
-lab_ip = "150.140.186.118"
-local_ip = "192.168.1.2"
+from common_data import lab_ip, local_ip
 
 app = FastAPI()
 cb = ContextBroker(lab_ip)
@@ -234,9 +233,8 @@ def get_wind_values() -> List[Wind]:
 def get_history(entity_id) -> List[Dict]:
     return db.get_history(entity_id)
 
-import uvicorn, sys, os
-
 if __name__ == "__main__":
+    import uvicorn, sys, os
 
     reload = "--reload" in sys.argv
 
