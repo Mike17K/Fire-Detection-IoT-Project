@@ -110,7 +110,7 @@ class ContextBroker:
         data = {
             "id": entityId,
             "type": "FireForestStatus",
-            "dateCreated": {
+            "dateObserved": {
                 "type": "DateTime",
                 "value": datetime.now(timezone.utc).isoformat(timespec="milliseconds")
             },
@@ -181,7 +181,6 @@ class ContextBroker:
             json=payload
         )
 
-
         if response.status_code != 204:
             print("Fail")
             raise Exception(f"{response.status_code} {response.text}")
@@ -223,6 +222,46 @@ class ContextBroker:
         ]
 
         self.__update_sensor(deviceId, dateObserved, data)
+
+    def update_fire_forest_status(
+        self,
+        entity_id:str,
+        fireDetected:bool,
+        fireDetectedConfidence:float,
+        fireRiskIndex:float
+    ) -> None:
+
+        print(f"Updating fire forest status: {entity_id}", end='...')
+
+        payload = {
+            "dateObserved": {
+                "type": "DateTime",
+                "value": datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+            },
+            "fireDetected": {
+                "type": "Boolean",
+                "value": fireDetected
+            },
+            "fireDetectedConfidence": {
+                "type": "Float",
+                "value": fireDetectedConfidence
+            },
+            "fireRiskIndex": {
+                "type": "Float",
+                "value": fireRiskIndex
+            },
+        }
+
+        response = requests.patch(
+            f"{self.context_broker_base_url}/entities/{entity_id}/attrs",
+            json=payload
+        )
+
+        if response.status_code != 204:
+            print("Fail")
+            raise Exception(f"{response.status_code} {response.text}")
+
+        print("Success")
 
 
     #### Get Entities ####
