@@ -5,13 +5,13 @@ import pandas as pd
 
 if __name__ == "__main__":
   # load from csv
-  dataframe = pd.read_csv("\\".join(__file__.split("\\")[:-2])+f"\\data\\normal_data_from_api.csv", header=None)
+  dataframe = pd.read_csv("/".join(__file__.split("/")[:-2])+f"/data/normal_data_from_api.csv", header=None)
   datasetHasLabels = dataframe.shape[1] % 2 == 1
   if not datasetHasLabels:
     # add all False in the first column
       dataframe.insert(0, 'label', False)
 
-  anomalus_data = pd.read_csv("\\".join(__file__.split("\\")[:-2])+f"\\data\\anomalus_data_from_api.csv", header=None).astype(np.float32)
+  anomalus_data = pd.read_csv("/".join(__file__.split("/")[:-2])+f"/data/anomalus_data_from_api.csv", header=None).astype(np.float32)
 
 
   SAMPLES_SIZE = dataframe.shape[0]
@@ -49,21 +49,21 @@ if __name__ == "__main__":
 
   # load saved model if available
   try:
-    autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\cache\\autoencoder")
+    autoencoder.load("/".join(__file__.split("/")[:-1])+f"/cache/autoencoder")
     print("Model found, loading it")
   except:
     print("No model found, creating a new one")
 
 
   # Train the model
-  history = autoencoder.fit(normal_train_data, normal_train_data, 
-            epochs=1000, 
+  history = autoencoder.fit(normal_train_data, normal_train_data,
+            epochs=1000,
             batch_size=512,
             validation_data=(test_data, test_data),
             shuffle=True)
 
   # save model to file
-  autoencoder.save("\\".join(__file__.split("\\")[:-1])+f"\\cache\\autoencoder")
+  autoencoder.save("/".join(__file__.split("/")[:-1])+f"/cache/autoencoder")
 
   plt.plot(history.history["loss"], label="Training Loss")
   plt.plot(history.history["val_loss"], label="Validation Loss")
@@ -82,4 +82,3 @@ if __name__ == "__main__":
   # test loss on anomalous data
   anomalus_loss = autoencoder.evaluate(anomalus_data, anomalus_data)
   print("Anomalus loss: ", anomalus_loss)
-
