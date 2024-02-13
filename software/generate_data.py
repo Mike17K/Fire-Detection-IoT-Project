@@ -346,13 +346,13 @@ async def generate_wind_values(
 
 
 async def main():
-    from common_data import trees_polygon_coords, wind_coordinates, connection_ip
+    from common_data import trees_polygon_coords, wind_coordinates, connection_host
 
     trees_polygon = Polygon([coord for coord in trees_polygon_coords]) # lon lat
 
     random.seed(0)
 
-    cb = ContextBroker(connection_ip)
+    cb = ContextBroker(connection_host)
 
     generate_tree_sensors(cb, trees_polygon, 150)
     generate_wind_sensors(cb, wind_coordinates)

@@ -8,10 +8,10 @@ from typing import Tuple, Dict, List
 from context_broker import ContextBroker
 from mysql_connection import DBConnection
 
-from common_data import connection_ip
+from common_data import connection_host, lab_host
 
 app = FastAPI()
-cb = ContextBroker(connection_ip)
+cb = ContextBroker(connection_host)
 
 origins = [
     "http://localhost:3000",
@@ -230,7 +230,7 @@ def get_wind_values() -> List[Wind]:
 
 @app.get("/history/{entity_id}")
 def get_history(entity_id) -> List[Dict]:
-    db = DBConnection(connection_ip)
+    db = DBConnection(lab_host)
     return db.get_history(entity_id)
 
 if __name__ == "__main__":
