@@ -20,13 +20,21 @@ def preprocess_data(data:list[dict]) -> list:
   return tmp_data
 
 def fire_detection() -> None:
-  cb.create_fire_forest_status(
-    "forest_status_0",
-    False,
-    1,
-    0,
-    trees_polygon_coords
-  )
+
+  trees_polygon_coords.append(trees_polygon_coords[0])
+
+  try:
+    cb.create_fire_forest_status(
+      "forest_status_0",
+      False,
+      1,
+      0,
+      trees_polygon_coords
+    )
+  except Exception as e:
+    print(e)
+
+  cb.get_entity("forest_status_0")
 
   tree_sensors = [dict(device) for device in get_tree_sensor_values()]
 
@@ -37,12 +45,16 @@ def fire_detection() -> None:
   prediction = predict(sensor_data) # returns the probability of fire
   print(prediction)
 
-  fire = True if prediction > 0.5 else False
+  fire_confidence = float(prediction[0])
+
+  fire = True if fire_confidence > 0.5 else False
+
+  print(fire)
 
   cb.update_fire_forest_status(
     "forest_status_0",
     fire,
-    prediction[0],
+    fire_confidence,
     0,
   )
 
