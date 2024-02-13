@@ -12,7 +12,7 @@ lab_ip = "150.140.186.118"
 local_ip = "192.168.1.2"
 
 app = FastAPI()
-cb = ContextBroker(local_ip)
+cb = ContextBroker(lab_ip)
 db = DBConnection(lab_ip)
 
 origins = [

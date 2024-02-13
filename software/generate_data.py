@@ -15,16 +15,16 @@ from context_broker import ContextBroker
 
 
 #### DATA ####
-trees_polygon = [
+trees_polygon_coords = [(coord[1], coord[0]) for coord in [
     (38.27095,21.92257),
     (38.29897,21.98112),
     (38.31716,21.95278),
     (38.31635,21.91518),
     (38.30934,21.86109),
     (38.28941,21.88135)
-]
+]]
 
-trees_polygon = Polygon([coord[::-1] for coord in trees_polygon]) # lon lat
+trees_polygon = Polygon([coord for coord in trees_polygon_coords]) # lon lat
 
 wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.27893, 21.92458),
@@ -370,7 +370,7 @@ async def generate_wind_values(
 async def main():
     random.seed(0)
 
-    cb = ContextBroker("192.168.1.2")
+    cb = ContextBroker("150.140.186.118")
 
     generate_tree_sensors(cb, trees_polygon, 150)
     generate_wind_sensors(cb, wind_coordinates)

@@ -6,7 +6,7 @@ from context_broker import ContextBroker
 from public_api import get_tree_sensor_values
 from generate_data import trees_polygon_coords
 
-cb = ContextBroker("192.168.1.2")
+cb = ContextBroker("150.140.186.118")
 
 def preprocess_data(data:list[dict]) -> list:
   tmp_data = []
