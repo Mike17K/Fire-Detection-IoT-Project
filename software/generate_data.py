@@ -93,7 +93,7 @@ def calculate_fire_radius(entity_location, fire_stats, seed, update_cycles):
         fire_radius = 0
     # Increase fire radius in second part of simulation
     elif seed < 2*update_cycles//3:
-        fire_radius = fire_stats["radius"] * seed/update_cycles
+        fire_radius = fire_stats["radius"] * seed/(update_cycles//3)
     # Fire stops growing in final part of simulation
     else:
         fire_radius = fire_stats["radius"]
