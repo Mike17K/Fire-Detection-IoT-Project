@@ -13,5 +13,5 @@ cd software
 docker compose up --build -d
 ```
 
-If you want to run the project locally use the local_build branch.
-Beware that the function for historical data will not function due to the lack of the aforementioned infrastructure
+If you want to run the project with local infrastructure use the local_build branch.
+Beware that the function for historical data will not function because a mechanism for creating it has not been configured in this case
