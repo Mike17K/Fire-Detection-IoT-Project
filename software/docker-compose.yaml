@@ -59,6 +59,8 @@ services:
         RUN pip install -r ai_requirements.txt
         COPY . .
         CMD ["python", "-u", "ai_connection.py"]
+    volumes:
+      - ./ai/model/cache:/detection_model/ai/model/cache
 
     restart: unless-stopped
     # depends_on:

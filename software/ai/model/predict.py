@@ -1,6 +1,8 @@
 from .model import AnomalyDetector
 import numpy as np
 
+import os
+
 autoencoder = None
 
 def init():
@@ -13,12 +15,16 @@ def init():
   autoencoder.compile(optimizer='adam', loss='mae')
 
   # load saved model if available
+  
+  script_dir = os.path.dirname(os.path.realpath(__file__))
+
   try:
-    path = "/".join(__file__.split("/")[:-1])+"/cache/autoencoder"
+    path = os.path.join(script_dir, "cache")
     print(path)
-    autoencoder.load(path)
+    autoencoder.load(path, filenameStartsWith="autoencoder")
     print("Model found, loading it")
-  except:
+  except Exception as e:
+    print(e)
     print("No model found, using a new one")
 
 def normalizeSensorData(data: np.ndarray):
@@ -47,6 +53,12 @@ def predict(data: np.ndarray) -> np.ndarray:
 
   data = normalizeSensorData(data)
   predictions = autoencoder.call(data)
-  estimation = ( np.max(np.abs(predictions - data), axis=1) - 0.5273888 ) / (0.52770746 - 0.5273888)
+  output = np.max(np.abs(predictions - data), axis=1)  
+  # print(output)
+  # anomalus output variable : 0.52053255 
+  # normal output variable : 0.5205132
+  estimation = ( output - 0.5205132 ) / (0.52053255 - 0.5205132)
+  # clip the estimation to [0,1]
+  estimation = np.clip(estimation, 0, 1)
   estimation_propability = np.exp(5*(estimation-0.5)) / (1 + np.exp(5*(estimation-0.5)))
   return estimation_propability

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import os
 
 class AnomalyDetector(tf.keras.models.Model):
   def __init__(self):
@@ -14,13 +15,16 @@ class AnomalyDetector(tf.keras.models.Model):
       tf.keras.layers.Dense(32, activation="relu"),
       tf.keras.layers.Dense(450, activation="sigmoid")]) # 450 = 150 sensors * 3 values
 
-  def save(self, path):
-    self.encoder.save(path + "_encoder.keras")
-    self.decoder.save(path + "_decoder.keras")
+  def load(self, path, filenameStartsWith="autoencoder"):
+    encoderFilePath = os.path.join(path, filenameStartsWith + "_encoder.tf")
+    decoderFilePath = os.path.join(path, filenameStartsWith + "_decoder.tf")
 
-  def load(self, path):
-    self.encoder = tf.keras.models.load_model(path + "_encoder.keras")
-    self.decoder = tf.keras.models.load_model(path + "_decoder.keras")
+    self.encoder = tf.keras.models.load_model(encoderFilePath)
+    self.decoder = tf.keras.models.load_model(decoderFilePath)
+  
+  def save(self, path, filenameStartsWith="autoencoder"):
+    self.encoder.save(os.path.join(path, filenameStartsWith + "_encoder.tf"))
+    self.decoder.save(os.path.join(path, filenameStartsWith + "_decoder.tf"))
 
   def call(self, x):
     encoded = self.encoder(x)
