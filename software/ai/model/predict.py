@@ -14,7 +14,9 @@ def init():
 
   # load saved model if available
   try:
-    autoencoder.load("\\".join(__file__.split("\\")[:-1])+f"\\cache\\autoencoder")
+    path = "/".join(__file__.split("/")[:-1])+"/cache/autoencoder"
+    print(path)
+    autoencoder.load(path)
     print("Model found, loading it")
   except:
     print("No model found, using a new one")
@@ -42,7 +44,7 @@ def predict(data: np.ndarray) -> np.ndarray:
   global autoencoder
   init()
   assert data.shape[1] == 450, "Data should have 450 columns"
-  
+
   data = normalizeSensorData(data)
   predictions = autoencoder.call(data)
   estimation = ( np.max(np.abs(predictions - data), axis=1) - 0.5273888 ) / (0.52770746 - 0.5273888)

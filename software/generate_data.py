@@ -31,7 +31,7 @@ steady_state_tree_stats = {
 steady_state_wind_stats = {
     "wind_direction": { # compass heading
         "mean": 270,
-        "deviation": 2,
+        "deviation": 10,
     },
     "wind_speed": { # m/s
         "mean": 9,
@@ -55,7 +55,7 @@ fire_stats = {
         "deviation": 20
     },
     "wind_direction": {
-        "deviation": 2
+        "deviation": 20
     },
     "wind_speed": {
         "mean": 12,
@@ -330,7 +330,7 @@ async def generate_wind_values(
 
             # Trim data to 2 decimal points
             wind_speed = float(f"{wind_speed:.2f}")
-            wind_direction = float(f"{wind_direction:.2f}")
+            wind_direction = float(f"{wind_direction:.0f}")
 
             print(wind_sensor["id"], wind_direction, wind_speed)
 
@@ -346,13 +346,13 @@ async def generate_wind_values(
 
 
 async def main():
-    from common_data import trees_polygon_coords, wind_coordinates, lab_ip, local_ip
+    from common_data import trees_polygon_coords, wind_coordinates, connection_host
 
     trees_polygon = Polygon([coord for coord in trees_polygon_coords]) # lon lat
 
     random.seed(0)
 
-    cb = ContextBroker(lab_ip)
+    cb = ContextBroker(connection_host)
 
     generate_tree_sensors(cb, trees_polygon, 150)
     generate_wind_sensors(cb, wind_coordinates)

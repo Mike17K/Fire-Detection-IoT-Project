@@ -1,9 +1,5 @@
-fastapi
-requests
-uvicorn
-paho-mqtt
-shapely
-perlin_noise
-tensorflow
-geopy
-mysql-connector-python
+-r public_api_requirements.txt
+-r mqtt_requirements.txt
+-r data_requirements.txt
+-r ai_requirements.txt
+tensorflow==2.15.0

@@ -108,7 +108,7 @@ class MqttClient:
         )
 
 if __name__ == "__main__":
-    from common_data import lab_ip, local_ip
+    from common_data import connection_host, lab_host
 
-    cb = ContextBroker(lab_ip)
-    client = MqttClient(lab_ip, 1883, cb)
+    cb = ContextBroker(connection_host)
+    client = MqttClient(lab_host, 1883, cb)

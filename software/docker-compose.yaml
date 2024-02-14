@@ -5,62 +5,77 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:latest
+        FROM python:3.12.2-bullseye
         WORKDIR /public_api
-        COPY public_api_requirements.txt .
+        COPY *.txt .
         RUN pip install -r public_api_requirements.txt
-        COPY *.py ./
+        COPY . .
         EXPOSE 3000
         CMD ["python", "public_api.py"]
 
     restart: unless-stopped
     ports:
       - 3000:3000
-    depends_on:
-      - orion
+    # depends_on:
+    #   - orion
 
   mqtt_client:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:latest
+        FROM python:3.12.2-bullseye
         WORKDIR /mqtt_client
-        COPY mqtt_requirements.txt .
+        COPY *.txt .
         RUN pip install -r mqtt_requirements.txt
-        COPY *.py ./
+        COPY . .
         CMD ["python", "-u", "mqtt_client.py"]
 
     restart: unless-stopped
-    depends_on:
-      - orion
+    # depends_on:
+    #   - orion
 
   data_generation:
     build:
       context: .
       dockerfile_inline: |
-        FROM python:latest
+        FROM python:3.12.2-bullseye
         WORKDIR /generate_data
-        COPY data_requirements.txt .
+        COPY *.txt .
         RUN pip install -r data_requirements.txt
-        COPY *.py ./
+        COPY . .
         CMD ["python", "-u", "generate_data.py"]
 
     restart: unless-stopped
-    depends_on:
-      - orion
+    # depends_on:
+    #    orion
 
-  orion:
-    image: fiware/orion
-    restart: unless-stopped
-    ports:
-      - 1026:1026
-    depends_on:
-      - mongo
-    command: -dbhost mongo
+  detection_model:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM tensorflow/tensorflow:2.15.0
+        WORKDIR /detection_model
+        COPY *.txt .
+        RUN pip install -r ai_requirements.txt
+        COPY . .
+        CMD ["python", "-u", "ai_connection.py"]
 
-  mongo:
-    image: mongo:6.0
     restart: unless-stopped
-    command: --nojournal
-    volumes:
-      - /data/mongo/iot:/data/db
+    # depends_on:
+    #   - orion
+
+  # orion:
+  #   image: fiware/orion:3.11.0
+  #   restart: unless-stopped
+  #   ports:
+  #     - 1026:1026
+  #   depends_on:
+  #     - mongo
+  #   command: -dbhost mongo
+
+  # mongo:
+  #   image: mongo:6.0
+  #   restart: unless-stopped
+  #   command: --nojournal
+  #   volumes:
+  #     - /data/mongo/iot:/data/db

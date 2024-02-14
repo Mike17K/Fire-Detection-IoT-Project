@@ -16,5 +16,7 @@ wind_coordinates = [(coord[1], coord[0]) for coord in [
     (38.29677, 21.96190)
 ]] # lon lat
 
-lab_ip = "150.140.186.118"
-local_ip = "172.0.0.1"
+lab_host = "150.140.186.118"
+local_host = "orion"
+
+connection_host = lab_host

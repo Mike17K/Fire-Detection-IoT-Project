@@ -433,9 +433,11 @@ class ContextBroker:
 
 
 if __name__ == "__main__":
-    context = ContextBroker("192.168.1.2")
+    from common_data import local_host
 
-    context.subscribe_to_device_updates("http://192.168.1.5:3001")
+    context = ContextBroker(local_host)
+
+    # context.subscribe_to_device_updates("http://192.168.1.5:3001")
 
     try:
         context.create_tree_sensor("tree_sensor_0", (1,2), "test")
@@ -496,8 +498,8 @@ if __name__ == "__main__":
     for wind_sensor in wind_sensors:
         context.delete_entity(wind_sensor["id"])
 
-    subscriptions = context.list_subscriptions()
+    # subscriptions = context.list_subscriptions()
     # print(json.dumps(subscriptions, indent=4))
 
-    for subscription in subscriptions:
-        context.delete_subscription(subscription["id"])
+    # for subscription in subscriptions:
+    #     context.delete_subscription(subscription["id"])

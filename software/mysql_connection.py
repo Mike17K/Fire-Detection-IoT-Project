@@ -1,13 +1,25 @@
 import mysql.connector
 
+from dotenv import load_dotenv
+import os
+
 class DBConnection:
   def __init__(self, host:str):
+
+    load_dotenv()
+
+    user = os.getenv('MYSQL_USER')
+    password = os.getenv('MYSQL_PASSWORD')
+
     self.cnx = mysql.connector.connect(
-      user="root",
-      password="root_password",
+      user=user,
+      password=password,
       host=host,
       database="default"
     )
+
+  def __del__(self):
+    self.cnx.close()
 
   def _get_controlled_property(self, entity_id:str) -> list:
 
@@ -78,7 +90,9 @@ class DBConnection:
     return formated_values
 
 if __name__ == "__main__":
-  db = DBConnection("150.140.186.118")
+  from common_data import lab_host
+
+  db = DBConnection(lab_host)
   values = db.get_history("tree_sensor_0")
 
   for value in values:
