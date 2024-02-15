@@ -60,4 +60,7 @@ def fire_detection() -> None:
   )
 
 if __name__ == "__main__":
-  fire_detection()
+  while True:
+    fire_detection()
+
+    time.sleep(5)
