@@ -88,15 +88,14 @@ def calculate_fire_radius(entity_location, fire_stats, seed, update_cycles):
     fire_radius_noise = PerlinNoise(octaves=20, seed=2*seed)
     distance_variation = fire_radius_noise(entity_location)
 
+    div = 5
+
     # Start simulation without fire
-    if seed < update_cycles//3:
+    if seed < update_cycles//div:
         fire_radius = 0
     # Increase fire radius in second part of simulation
-    elif seed < 2*update_cycles//3:
-        fire_radius = fire_stats["radius"] * seed/update_cycles
-    # Fire stops growing in final part of simulation
     else:
-        fire_radius = fire_stats["radius"]
+        fire_radius = fire_stats["radius"] * (seed - update_cycles//div ) / ((div-1) * update_cycles//div)
 
     return fire_radius * (1 + distance_variation/10)
 
