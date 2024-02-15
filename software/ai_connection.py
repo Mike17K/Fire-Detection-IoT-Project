@@ -42,6 +42,7 @@ def fire_detection() -> None:
     preprocess_data(tree_sensors)
   ])
 
+  print("starts predict")
   prediction = predict(sensor_data) # returns the probability of fire
   print(prediction)
 
@@ -61,4 +62,4 @@ def fire_detection() -> None:
 if __name__ == "__main__":
   fire_detection()
 
-  time.sleep(10)
+  time.sleep(5)

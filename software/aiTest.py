@@ -29,14 +29,20 @@ def preprocess_data(data):
 
 import pandas as pd
 import numpy as np
-anomalus_data_stored = pd.read_csv("\\".join(__file__.split("\\")[:-1])+f"\\ai\\data\\test_data_from_api.csv", header=None).astype(np.float32)
+import os
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+anomalous_data_path = os.path.join(script_dir,"ai", "data", "test_data_from_api.csv")
+
+anomalus_data_stored = pd.read_csv( anomalous_data_path, header=None)
 
 # Test 1: ( Normal Data: 450 values )
 sensor_data = np.array([
-    preprocess_data(api_anomalus_data),
+    preprocess_data(api_anomalus_data), 
     preprocess_data(api_normal_data),
     
-    *anomalus_data_stored.values
+    # *anomalus_data_stored.values
 ])
 
 print(predict(sensor_data)) # returns the probability of fire

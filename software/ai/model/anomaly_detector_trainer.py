@@ -3,15 +3,24 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 
+import os
+
 if __name__ == "__main__":
   # load from csv
-  dataframe = pd.read_csv("/".join(__file__.split("/")[:-2])+f"/data/normal_data_from_api.csv", header=None)
+  script_dir = os.path.dirname(os.path.realpath(__file__))
+  parent_dir = os.path.abspath(os.path.join(script_dir, os.pardir))
+
+  normal_data_path = os.path.join(parent_dir, "data", "normal_data_from_api.csv")
+  anomalous_data_path = os.path.join(parent_dir, "data", "anomalus_data_from_api.csv")
+
+  dataframe = pd.read_csv(normal_data_path, header=None)
+  anomalus_data = pd.read_csv( anomalous_data_path, header=None)
+
   datasetHasLabels = dataframe.shape[1] % 2 == 1
   if not datasetHasLabels:
     # add all False in the first column
       dataframe.insert(0, 'label', False)
 
-  anomalus_data = pd.read_csv("/".join(__file__.split("/")[:-2])+f"/data/anomalus_data_from_api.csv", header=None).astype(np.float32)
 
 
   SAMPLES_SIZE = dataframe.shape[0]
@@ -47,9 +56,12 @@ if __name__ == "__main__":
   autoencoder = AnomalyDetector()
   autoencoder.compile(optimizer='adam', loss='mae')
 
-  # load saved model if available
+  script_dir = os.path.dirname(os.path.realpath(__file__))
+
   try:
-    autoencoder.load("/".join(__file__.split("/")[:-1])+f"/cache/autoencoder")
+    path = os.path.join(script_dir, "cache")
+    print(path)
+    autoencoder.load(path, filenameStartsWith="autoencoder")
     print("Model found, loading it")
   except:
     print("No model found, creating a new one")
@@ -63,7 +75,7 @@ if __name__ == "__main__":
             shuffle=True)
 
   # save model to file
-  autoencoder.save("/".join(__file__.split("/")[:-1])+f"/cache/autoencoder")
+  autoencoder.save(path, filenameStartsWith="autoencoder")
 
   plt.plot(history.history["loss"], label="Training Loss")
   plt.plot(history.history["val_loss"], label="Validation Loss")
